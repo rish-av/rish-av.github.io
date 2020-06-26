@@ -13,7 +13,7 @@ I am also a fan of algorithmic programming and like to code as a brain train exc
 I love to travel. I love history. I write [sometimes](https://rish-av.github.io).
 I am an Indian at heart. I love the colors, chaos, food and wonders of India.
 
-Would you like to talk more? let's meet for a cup of coffee (or a can of Redbull :-P), drop me an email, more often than not, I'll reply instantly.
+Would you like to talk more? let`s meet for a cup of coffee (or a can of Redbull :-P), drop me an email, more often than not, I will reply instantly.
 
 ### Contact me
 
