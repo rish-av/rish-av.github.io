@@ -20,8 +20,8 @@ kramdown:
 
 # Third-party services
 # just leave someone empty to disable it
-# google_analytics: 
-disqus_shortname:
+google_analytics: UA-171076140-1
+disqus_shortname: rish-av-github-io
 
 # used this for post_excerpt at index_page
 excerpt_separator: <!--description-->
