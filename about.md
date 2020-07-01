@@ -10,8 +10,8 @@ My name is Rishav (yeah, no surname :-P). I am a final year undergraduate studen
 
 I am also a fan of algorithmic programming and like to code as a brain train excercise.
 
-I love to travel. I love history. I write [sometimes](https://rish-av.github.io).
-I am an Indian at heart. I love the colors, chaos, food and wonders of India.
+While I am not working, I would be reading about some historical events or learning flute. I love to travel.
+I am an Indian at heart. I love the colors, chaos, food and wonders of India. I am specially a big admirer of ancient India.
 
 Would you like to talk more? let`s meet for a cup of coffee (or a can of Redbull :-P), drop me an email, more often than not, I will reply instantly.
 
