@@ -12,4 +12,4 @@ permalink: "/publications/"
 
 ### Thesis
 
-Bachelor thesis on "Deep Learning for Scene Flow Estimation using Sparse LiDAR + RGB images." Parts of it were accepted as paper at ICPR 2021 and IROS 2020. You can find it [here](#).
+Bachelor thesis on "Deep Learning for Scene Flow Estimation using Sparse LiDAR + RGB images." Parts of it were accepted for publication at ICPR 2021 and IROS 2020. The Overall abstract of the Thesis can be found [here](https://drive.google.com/file/d/1vIKs2YXGGWKKpbggl4vKl7d3lCUhjqXM/view?usp=sharing) (experiments & results can be seen in the papers), the whole thesis can be provided if asked for.  
