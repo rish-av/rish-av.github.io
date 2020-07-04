@@ -6,7 +6,7 @@ permalink: "/publications/"
 
 ---
 ### 2020
-| :----------- | :------------|
+| :-----------: | :------------: |
 
 |!["ResFPN"](images/resfpn.png) | [ResFPN: Residual Skip Connections in Multi-Resolution Feature Pyramid Networks for Accurate Dense Pixel Matching (Accepted at IEEE ICPR-2020, Milan, Itlay)](https://arxiv.org/abs/2006.12235)|
 
