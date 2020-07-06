@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Bachelor Thesis at DFKI, Kaiserslautern, Germany!"
+title:  "I lost my pen :(, please checkback later"
 date: 2020-06-27
 categories: jekyll
 comments: true
