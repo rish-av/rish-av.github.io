@@ -6,7 +6,7 @@ permalink: /about/
 
 Hi There!
 
-My name is Rishav (yeah, no surname :-P). I am a final year undergraduate student at BITS Pilani. I am passionate about research in Artificial Intelligence, specifically computer vision. I believe AI has the solution to several problems that matter for the overall good of humanity. I like to code in python. 
+My name is Rishav (yeah, no surname :-P). I am a final year undergraduate student at BITS Pilani. I am passionate about research in Artificial Intelligence, specifically computer vision. I believe AI has the solution to several problems that matter for the overall good of everyone. I like to code in python. 
 
 I am also a fan of algorithmic programming and like to code as a brain train excercise.
 
