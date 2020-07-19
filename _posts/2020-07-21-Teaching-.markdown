@@ -1,0 +1,8 @@
+---
+layout: post
+title:  "My experience being a head teaching assitant for a class of 140 students..."
+date: 2020-07-21
+categories: jekyll
+comments: false
+---
+
