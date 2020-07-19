@@ -9,7 +9,7 @@ My name is Rishav (yeah, no surname :-P). I am a final year undergraduate studen
 
 ### Research Interests
 
-I am passionate about research in Artificial Intelligence, specifically Computer Vision. I like to code in python. I completed my bachelor thesis at DFKI Kaiserslautern under Prof. Dr. Didier Stricker. I worked along side Rene Schuster, Ramy Battrawy and Oliver Wasenmueller. I worked on **Deep Learning for Scene Flow Estimation using monocular camera & sparse LiDAR**. The work has been published in the form of 2 papers at top conferences, they can be found in the publications page.
+I am passionate about research in Artificial Intelligence, specifically Computer Vision. I like to code in python. I completed my bachelor thesis at DFKI Kaiserslautern under [Prof. Dr. Didier Stricker](https://av.dfki.de/members/stricker/). I worked along side [René Schuster](https://av.dfki.de/members/schuster/), [Ramy Battrawy](https://av.dfki.de/members/battrawy/) and [Oliver Wasenm&uuml;ller](https://av.dfki.de/members/wasenmueller/). I worked on **Deep Learning for Scene Flow Estimation using monocular camera & sparse LiDAR**. The work has been published in the form of 2 papers at top conferences, they can be found in the publications page.
 
 During my 4 years at BITS Pilani, I tried almost everything, from graphic designing to web developement to android programming but computer vision came out to be the one which really stuck with me. I did loose some grades meanwhile but I have no regrets since the experience of trying everything out and narrowing my interests definitely made my future path crystal clear for me. Apart from deep learning, I am also a fan of algorithmic programming and like to code as a brain train excercise.
 
