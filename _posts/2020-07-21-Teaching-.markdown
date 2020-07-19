@@ -6,3 +6,17 @@ categories: jekyll
 comments: false
 ---
 
+This is a small story about my expeirence as teaching assitant for over 140 students in **Neural Networks** course at BITS Pilani.
+
+2nd semester 2019-2020 started with a sense of relaxation for me, sicne it was the last semester of my undergraduate studies. I had just came back from Germany after an exciting 7 months. The experience was good and helped me be certain about a research career. The experience helped me make sure that I have to get a doctorate but I stil had several questions in my mind.
+
+I wasn't sure which path would be the best, an academic life or an industrial life. In the industry, it's usually your experience than degrees that counts a lot. Getting a masters in 2 years and a work experience of 4 years would probably land me at a better place in the industry than 6 years of a PhD. In academia, the more degrees you have, the better it gets but along with that you need to teach. I never had that experience and Neural Networks was my first time getting involved in teaching process, hence I was excited and also expecting to answers to all my doubts.
+
+Jumping directly to the first assignment I created. It was a ipython notebook for students to solve. It had problems related to PCA & SVD. The creation process was a huge pain for me, the autograder seemed to fail almost everytime. Finally with some help, I got it running. The real nightmare came when students were solving it, there were numerous errors, typos which made things really difficult for them. I had to monitor my mail continuosly just to keep a track of all doubts that people may have. That week was tiring but this was just the begining. After the submission, I found that there was an error in the data file I generated, the error was so huge that I had to literally manually check every notebook since autograder crashed completely. Anyhow I completed my work and checking was done.
+
+It was March 14 when I was discussing with the other TA about 2nd assignment when a notice came to vacate dorms since COVID-19 had started to blow up. It was bad, we all went home. The 2nd assignment was not prepared by me but I did help the other guy (remotely). All of this helped me realise that an academic life is not that easy but the queries from various students also helped me realise that I am not done studying. I want to study and be able to answer all questions, I want to innovate, I want to create something of own, I want a docotrate for sure!
+
+So the overall outcome except from the TAship stipend was a guarantee that a doctorate is a must :)  
+
+
+
