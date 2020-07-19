@@ -22,8 +22,8 @@ Would you like to talk more? let`s meet for a cup of coffee (or a can of Redbull
 - +91-9205229294
 
 ### Social Media
-!["Twitter"](./_includes/icon-twitter.svg)
-<img src="./_includes/icon-twitter.svg">
+!["Twitter"](images/icon-twitter.svg)
+<img src="images/icon-twitter.svg">
 
 
 - [GitHub](https://github.com/rish-av)
