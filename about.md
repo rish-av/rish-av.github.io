@@ -4,16 +4,33 @@ title: About
 permalink: /about/
 ---
 
-Thanks for visiting my website! 
+Hi There!
 
-My name is Rishav (yeah, no surname :-P). I am a final year undergraduate student at BITS Pilani. I am passionate about research in Artificial Intelligence, specifically computer vision. I like to code in python. Overall, I am just another human being interested in imparting knowledge to artificial agents.
+My name is Rishav (yeah, no surname :-P). I am a final year undergraduate student at BITS Pilani. I am passionate about research in Artificial Intelligence, specifically computer vision. I believe AI has the solution to several problems that matter for the overall good of humanity. I like to code in python. 
 
 I am also a fan of algorithmic programming and like to code as a brain train excercise.
 
-While I am not working, I would be reading about some historical events or learning flute. I love to travel.
-I am an Indian at heart. I love the colors, chaos, food and wonders of India. I am specially a big admirer of ancient India.
+While I am not working, I would be reading about some historical events or playing flute or teaching kids. I am a huge admirer of ancient India. I consider learning a hobby. You can never stop to learn. Following quotes from the *Brahadaranyaka Upanishad* has always inspired me:
 
-Would you like to talk more? let`s meet for a cup of coffee (or a can of Redbull :-P), drop me an email, more often than not, I will reply instantly.
+```
+ॐ सर्वेशां स्वस्तिर्भवतु ।
+सर्वेशां शान्तिर्भवतु ।
+सर्वेशां पुर्णंभवतु ।
+सर्वेशां मङ्गलंभवतु ।
+ॐ शान्तिः शान्तिः शान्तिः ॥
+```
+
+This means:
+
+```
+May there be Well-Being in All,
+May there be Peace in All,
+May there be Fulfilment in All,
+May there be Auspiciousness in All,
+Om Peace, Peace, Peace.
+```
+
+Would you like to talk more? let`s meet for a cup of coffee (or a can of Redbull :-P), drop me an email, more often than not, I will reply quickly.
 
 ### Contact me
 
@@ -22,10 +39,9 @@ Would you like to talk more? let`s meet for a cup of coffee (or a can of Redbull
 - +91-9205229294
 
 ### Social Media
-!["Twitter"](_includes/icon-twitter.html)
-
-
+- [Twitter](https://twitter.com/rishav_real)
 - [GitHub](https://github.com/rish-av)
 - [Spotify](https://open.spotify.com/user/31qhhbgjwrtuvru26fbwxvs5ohpq?si=wZ9dYuO9TfGS9Nzo1HuCdw)
 - [Facebook](https://www.facebook.com/rkdx007)
 - [Instagram](https://www.instagram.com/rish_av9/)
+- [Good-Reads](https://www.goodreads.com/review/list/111139955)
