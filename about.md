@@ -9,10 +9,9 @@ My name is Rishav (yeah, no surname :-P). I am a final year undergraduate studen
 
 ### Research Interests
 
-I am passionate about research in Artificial Intelligence, specifically Computer Vision. I like to code in python. I completed my bachelor thesis at DFKI Kaiserslautern under [Prof. Dr. Didier Stricker](https://av.dfki.de/members/stricker/). I worked along side [René Schuster](https://av.dfki.de/members/schuster/), [Ramy Battrawy](https://av.dfki.de/members/battrawy/) and [Oliver Wasenm&uuml;ller](https://av.dfki.de/members/wasenmueller/). I worked on **Deep Learning for Scene Flow Estimation using monocular camera & sparse LiDAR**. The work has been published in the form of 2 papers at top conferences, they can be found in the publications page.
+During my undergrad years at BITS Pilani, I tried almost everything, from graphic designing to web developement to android programming to see what really 'excites' me. Finally, it computer vision that came out to be the one which really stuck with me. I did loose some grades in the process but I have no regrets since the experience of trying everything out and narrowing my interests definitely made my future path crystal clear for me. Apart from deep learning, I am also a fan of algorithmic programming and like to code as a brain train excercise.
 
-During my 4 years at BITS Pilani, I tried almost everything, from graphic designing to web developement to android programming but computer vision came out to be the one which really stuck with me. I did loose some grades meanwhile but I have no regrets since the experience of trying everything out and narrowing my interests definitely made my future path crystal clear for me. Apart from deep learning, I am also a fan of algorithmic programming and like to code as a brain train excercise.
-
+As stated earlier, my primary research interests lie in the field of computer vision (all sorts of problems). I recently completed my bachelor thesis at DFKI Kaiserslautern under [Prof. Dr. Didier Stricker](https://av.dfki.de/members/stricker/). I worked along side [René Schuster](https://av.dfki.de/members/schuster/), [Ramy Battrawy](https://av.dfki.de/members/battrawy/) and [Oliver Wasenm&uuml;ller](https://av.dfki.de/members/wasenmueller/). I worked on **Deep Learning for Scene Flow Estimation using monocular camera & sparse LiDAR**. Parts from the work has been published at top conferences, they can be found in my publications page.
 
 ### Other Interests
 
@@ -48,10 +47,10 @@ I also love rock music from the 80s and 90s, *Scorpions, Queen* have a special p
 
 ### Long Term Interests
 
-Eventhough I hate making long term plans, my goal is to use AI for problems that matter and not just the problems for which we have dataset available. India is a representative of the problems faced by the developing world and a lot of them can be solved with use of smart tech and AI. AI has the solutions to long term problems like climate change. Overall, AI if used ethically has a solution for a sustainable world.
+Eventhough I hate making long term plans, my goal is to use AI for problems that matter and not just the problems for which we have datasets available. India is the representative of the problems faced by the developing world and a lot of them can be solved with use of smart tech and AI. AI has the solutions to long term problems like climate change. Overall, AI if used ethically has a solution for a sustainable world.
 
 
-Would you like to talk more? let`s meet for a cup of coffee (or a can of Redbull :-P), drop me an email, more often than not, I will reply quickly.
+Would you like to talk more? meet me for a cup of coffee (or a can of Redbull :-P), drop an email, more often than not, I will reply within 24 hours.
 
 ### Contact me
 
