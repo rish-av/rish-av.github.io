@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Wrapping up of undergraduate degree and the way ahead..."
+title:  "Wrapping up of my undergraduate degree and the way ahead..."
 date: 2020-07-21
 categories: jekyll
 comments: false
