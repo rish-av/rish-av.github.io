@@ -1,3 +1,12 @@
+---
+layout: post
+title:  "My experience being a teaching assitant in a course of 140 students..."
+date: 2020-07-21
+categories: jekyll
+comments: false
+---
+
+
 This is a small memoir about my experience as a teaching assistant for over 140 students in the Neural Networks course at BITS Pilani.
 2nd semester of 2019-2020 started with a sense of relaxation since it was the last semester of my undergraduate studies. I had just come back from Germany after an exciting seven months. The experience was excellent and helped me be sure about a research career. But I was not sure where should I take this journey forward to? Maybe a master's or perhaps a doctorate (which I preferred more)? I wasn't sure which path would be the best, academic life or industrial life? I had so many questions still unanswered.
 
@@ -6,4 +15,4 @@ In the industry, it's usually your experience than degrees that counts a lot. Ge
 Jumping directly to the time of the first assignment that I created. It was an ipython notebook for students to solve. It had problems related to PCA & SVD. The creation process was a massive pain for me, the autograder failed almost every time since I missed one or more corner cases. Finally, with some help, I got it running. The real nightmare came when students were solving it; there were numerous errors, typos which made things difficult for them. I had to monitor my mail continuously just to keep track of all doubts that people may have. That week was tiring, but this was just the beginning. After the submission, I found that there was an error in the data file I generated, the error was so huge that I had to literally manually check every notebook since autograder crashed completely. The data I generated had linearly dependent columns, which is a nightmare for PCA. Anyhow I completed my work, and evaluation was complete.
 
 It was March 14 when I discussed with the other TA about 2nd assignment when a notice came to vacate dorms since COVID-19 had started to blow up. It was a sad time; we all went home. The 2nd assignment was prepared remotely by the other TA with some help from my side. All of this gave me a glimpse that academic life is not that easy, but the queries from various students also helped me realize that I still have a lot to study. I want to study and be able to answer all questions; I like to dig my mind deep into mathematical equations and problems. I want to innovate; I want to create something of my own. I want a doctorate, for sure!
-So the overall outcome except the TAship stipend was a guarantee that a doctorate is a must and maybe it's the academia where I am best suited :)
+So the overall outcome except the TAship stipend was a guarantee that a doctorate is a must and maybe it's the academia where I am best suited :) and btw the assignmets and scripts from the course can be found [here](https://github.com/rish-av/NNFL-2020).
