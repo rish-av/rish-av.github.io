@@ -4,8 +4,9 @@ title: Home
 ---
 
 <div class="home">
-   {% for news in site.news%}
+   {%for news in site.news%}
    <p>
    {{news.content}}
    </p>
+   {% endfor %}
 </div>
