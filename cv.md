@@ -6,5 +6,5 @@ permalink: "/cv/"
 
 
 ---
-- [CV (Detailed)](https://drive.google.com/file/d/1ItdBtjLlAz_YauW93aneJ8vieGaZgLHB/view?usp=sharing)
-- [Resume (1 page)](https://drive.google.com/file/d/1rkU7XShhVHsnS54BN3ZF2mvIyDR3RZfi/view?usp=sharing)
+- [CV (Detailed)](https://rish-av.github.io/files/rishav_cv_latest.pdf)
+- [Resume (1 page)](https://rish-av.github.io/files/rishav_newResume.pdf)
