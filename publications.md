@@ -5,7 +5,7 @@ permalink: "/publications/"
 ---
 
 
-<img align="left" height="100" src="https://rish-av.github.io/images/resfpn.png">
+<img align="left" height="100" padding-right="20px" src="https://rish-av.github.io/images/resfpn.png">
 **ResFPN**: Residual Skip Connections in Multi-Resolution Feature Pyramid Networks for Accurate Dense Pixel Matching (IEEE ICPR-2020, Milan, Itlay) [**[paper]**](https://arxiv.org/abs/2006.12235)
 
 -----
