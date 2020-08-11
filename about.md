@@ -3,6 +3,7 @@ layout: page
 title: About
 permalink: /about/
 ---
+!["picture"](images/rishav_github.jpg){: style="float: left"}
 
 Hi There!
 My name is Rishav (yeah, no surname :-P). I am a final year undergraduate student at BITS Pilani (about to graduate).
