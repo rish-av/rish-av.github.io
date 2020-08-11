@@ -1,6 +1,6 @@
 ---
-layout: default
-title: Home
+layout: page
+title: Latest News
 permalink: "/news/"
 ---
 
