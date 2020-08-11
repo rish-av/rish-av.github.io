@@ -5,6 +5,7 @@ permalink: /about/
 ---
 
 <img align="left" height="100" src="https://rish-av.github.io/images/rishav_github.jpg">
+&nbsp;&nbsp;
 
 Hi There!
 My name is Rishav (yeah, no surname :-P). I am a final year undergraduate student at BITS Pilani (about to graduate).<br/><br/>
