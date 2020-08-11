@@ -12,8 +12,8 @@ title: Archive
     {% for post in category.last %}
 
     <div class="post_title">
-      <font size="12px"><a href="{{ post.url | prepend: site.baseurl }}">{{ post.title}}</a>
-      <font size="12px"><span class="date">{{ post.date | date: "%-d %b, %Y" }}</span>
+      <font size="0.8em"><a href="{{ post.url | prepend: site.baseurl }}">{{ post.title}}</a>
+      <font size="0.8em"><span class="date">{{ post.date | date: "%-d %b, %Y" }}</span>
     </div>
 
     {% endfor %}
