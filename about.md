@@ -22,32 +22,30 @@ As stated earlier, my primary research interests lie in the field of computer vi
 While I am not working, I like to read about historical events or play flute or teach kids. I am a huge admirer of ancient India. I consider learning a hobby. One can never stop to learn. Also, Yoga is life :), Following *shlokas* from *Maha Upanishads* have always inspired me:
 
 ***
-> ॐ सर्वेशां स्वस्तिर्भवतु । 
-> सर्वेशां शान्तिर्भवतु । 
-> सर्वेशां पुर्णंभवतु । 
-> सर्वेशां मङ्गलंभवतु । 
-> ॐ शान्तिः शान्तिः शान्तिः ॥ 
+> ॐ सर्वेशां स्वस्तिर्भवतु ।  
+> सर्वेशां शान्तिर्भवतु ।  
+> सर्वेशां पुर्णंभवतु ।  
+> सर्वेशां मङ्गलंभवतु ।  
+> ॐ शान्तिः शान्तिः शान्तिः ॥  
 
 
-> अयं बन्धुरयंनेति गणना लघुचेतसाम् ।
-> उदारचरितानां तु वसुधैव कुटुम्बकम् ॥
+> अयं बन्धुरयंनेति गणना लघुचेतसाम् ।  
+> उदारचरितानां तु वसुधैव कुटुम्बकम् ॥  
 
 Which means:
 
-```
-May there be Well-Being in All,
-May there be Peace in All,
-May there be Fulfilment in All,
-May there be Auspiciousness in All,
-Om Peace, Peace, Peace.
 
------
+> May there be Well-Being in All,  
+> May there be Peace in All,  
+> May there be Fulfilment in All,  
+> May there be Auspiciousness in All,  
+> Om Peace, Peace, Peace.  
 
-One is a relative, the other stranger,
-say the small minded.
-The entire world is a family,
-live the magnanimous.
-```
+
+> One is a relative, the other stranger,  
+> say the small minded.  
+> The entire world is a family, live the magnanimous.  
+
 
 I also love rock music from the 80s and 90s, *Scorpions, Queen* have a special place in my heart. You can find me on [spotify](https://open.spotify.com/user/31qhhbgjwrtuvru26fbwxvs5ohpq?si=wZ9dYuO9TfGS9Nzo1HuCdw).
 
