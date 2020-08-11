@@ -22,16 +22,15 @@ As stated earlier, my primary research interests lie in the field of computer vi
 While I am not working, I like to read about historical events or play flute or teach kids. I am a huge admirer of ancient India. I consider learning a hobby. One can never stop to learn. Also, Yoga is life :), Following *shlokas* from *Maha Upanishads* have always inspired me:
 
 ***
-1. 
-> ॐ सर्वेशां स्वस्तिर्भवतु । <br\>
-> सर्वेशां शान्तिर्भवतु ।  <br\>
-> सर्वेशां पुर्णंभवतु ।  <br\>
-> सर्वेशां मङ्गलंभवतु ।  <br\>
-> ॐ शान्तिः शान्तिः शान्तिः ॥  <br\>
+> ॐ सर्वेशां स्वस्तिर्भवतु ।
+> सर्वेशां शान्तिर्भवतु ।
+> सर्वेशां पुर्णंभवतु ।
+> सर्वेशां मङ्गलंभवतु ।
+> ॐ शान्तिः शान्तिः शान्तिः ॥
 
-2. 
-> अयं बन्धुरयंनेति गणना लघुचेतसाम् ।  <br\>
-> उदारचरितानां तु वसुधैव कुटुम्बकम् ॥  <br\>
+
+> अयं बन्धुरयंनेति गणना लघुचेतसाम् ।
+> उदारचरितानां तु वसुधैव कुटुम्बकम् ॥
 
 Which means:
 
