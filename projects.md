@@ -17,7 +17,7 @@ images for estimating plant height at Chloropy Tech, Singapore. Implemented two 
 
 
 - ***HSID-CNN:*** Worked on Deep Learning for cleaning and extraction of useful bands in hyperspectral images,
-used google BigQuery for accessing LANDSAT data. Implemented HSID-CNN in tensorflow for denoising hyperspectral images. *Code will be released very soon.*
+used google BigQuery for accessing LANDSAT data. Implemented HSID-CNN in tensorflow for denoising hyperspectral images.[**[code]**](https://github.com/rish-av/hsid-cnn)
 
 - ***Active Learning:*** Implemented active learning algorithms on MNIST, tested various techniques like Query by committee & uncertainty sampling, also tested cluster based testing technique where whole dataset was labelled on the basis of just 10% of points. [[**code**]](https://github.com/rish-av/Machine-Learning-Assignments)
 
