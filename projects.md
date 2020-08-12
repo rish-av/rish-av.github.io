@@ -2,10 +2,8 @@
 layout: page
 title: Projects
 permalink: "/projects/"
-
-
-
 ---
+
 Some of my hand-picked projects are:
 
 - ***DeepLIDARFlow:*** Bachelor thesis; worked on scene flow estimation using monocular camera & sparse LiDAR, work from the thesis has been accepted at two conferences. Papers & the corresponding code can be found in the publications page.
