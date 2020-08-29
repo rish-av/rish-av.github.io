@@ -4,10 +4,23 @@ title: Publications
 permalink: "/publications/"
 ---
 
+<div class='container2'>
+		<div class="left">
+			<img src='/images/resfpn.png' class='iconDetails'>
+		</div>	
+	<div   class="right" >
+	<h4>ResFPN: Residual Skip Connections in Multi-Resolution Feature Pyramid Networks for Accurate Dense Pixel</h4>
+	<h5>fine location, GPS, coarse location</h5>
+	</div>
+</div>
+
+
+
+
 <tbody>
 	
 	<tr>
-		<td style="width:25%"><img src="/images/resfpn.png" alt="Align2Ground" width="250" style="border-style: none">
+		<td style="width:25%"><img src="/images/resfpn.png" alt="Align2Ground" width="250" style="border-style: none"></td>
 		<td style="width:75%" valign="top">
 			<p>
 				<strong> ResFPN: Residual Skip Connections in Multi-Resolution Feature Pyramid Networks for Accurate Dense Pixel </strong> <br>
