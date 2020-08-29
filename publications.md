@@ -7,7 +7,7 @@ permalink: "/publications/"
 <tbody>
 	
 	<tr>
-		<td style="width:25%"><img src="/images/resfpn.png" alt="Align2Ground" width="250" style="border-style: none"></td>
+		<td style="width:25%"><img src="/images/resfpn.png" alt="Align2Ground" width="250" style="border-style: none">
 		<td style="width:75%" valign="top">
 			<p>
 				<strong> ResFPN: Residual Skip Connections in Multi-Resolution Feature Pyramid Networks for Accurate Dense Pixel </strong> <br>
