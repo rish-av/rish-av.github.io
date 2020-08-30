@@ -51,7 +51,7 @@ permalink: "/projects/"
         <td style="width:25%"><img src="/images/stream_kdlsz2.png" alt="Align2Ground" width="250" style="border-style: none"></td>
         <td style="width:75%" valign = "top">
         <p>
-            <strong>Implemented active learning algorithms on MNIST, tested various techniques like Query by committee & uncertainty sampling, also tested cluster based testing technique where whole dataset was labelled on the basis of just 10% of points.  <br>
+            <strong>Active Learning:</strong> Implemented active learning algorithms on MNIST, tested various techniques like Query by committee & uncertainty sampling, also tested cluster based testing technique where whole dataset was labelled on the basis of just 10% of points.  <br>
             <a href="https://github.com/rish-av/Machine-Learning-Assignments"> [Code] </a>
         </p>
         </td>
@@ -61,7 +61,7 @@ permalink: "/projects/"
         <td style="width:25%"><img src="/images/compilerDesign.jpg" alt="Align2Ground" width="250" style="border-style: none"></td>
         <td style="width:75%" valign = "top">
         <p>
-            <strong>Constructed a compiler for a given language specification in C language, this included the development of lexer, parser, semantic-analyzer, code-generator.<br>
+            <strong>Compiler Construction: </strong> Constructed a compiler for a given language specification in C language, this included the development of lexer, parser, semantic-analyzer, code-generator.<br>
             <a href="https://github.com/diveshuttam/CS-F363"> [Code] </a>
         </p>
         </td>
@@ -71,7 +71,7 @@ permalink: "/projects/"
         <td style="width:25%"><img src="/images/shm.jpg" alt="Align2Ground" width="250" style="border-style: none"></td>
         <td style="width:75%" valign = "top">
         <p>
-            <strong>Implemented auto-regressive model for feature extraction and several unsupervised algorithms like one-class SVM for final classification.<br>
+            <strong>Structural Health Monitoring:</strong>Implemented auto-regressive model for feature extraction and several unsupervised algorithms like one-class SVM for final classification.<br>
             <a href="https://github.com/rish-av/shm_machineLearning"> [Code] </a>
         </p>
         </td>
