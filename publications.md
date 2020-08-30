@@ -27,7 +27,7 @@ permalink: "/publications/"
 	</tr>
 
     <tr>
-		<td width="25%"><img src="/images/deeplidarflow.png" alt="Align2Ground" width="250" style="border-style: none"></td>
+		<td width="25%"><img src="/images/deeplidarflow.png" b></td>
 		<td width="75%" valign="top">
 			<p>
 				<strong> DeepLiDARFlow: A Deep Learning Architecture For Scene Flow Estimation Using Monocular Camera and Sparse LiDAR  </strong><br>
