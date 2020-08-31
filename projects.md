@@ -41,7 +41,7 @@ permalink: "/projects/"
         <td style="width:25%"><img src="/images/download.jpg" alt="Align2Ground" width="250" style="border-style: none"></td>
         <td style="width:75%" valign = "top">
         <p>
-            <strong>Visual Commonsense Reasoning: </strong>Worked on Deep Learning for cleaning and extraction of useful bands in hyperspectral images, used google BigQuery for accessing LANDSAT data. Implemented HSID-CNN in tensorflow for denoising hyperspectral images <br>
+            <strong>HSID-CNN: </strong>Worked on Deep Learning for cleaning and extraction of useful bands in hyperspectral images, Implemented HSID-CNN in tensorflow for denoising hyperspectral images (AVIRIS) <br>
             <a href="https://github.com/rish-av/hsid-cnn"> [Code] </a>
         </p>
         </td>
