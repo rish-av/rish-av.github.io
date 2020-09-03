@@ -20,7 +20,7 @@ permalink: "/publications/"
 				<em>International Conference on Pattern Recongnition (ICPR), 2020 </em>
 				<br>
 
-				<a href="https://arxiv.org/abs/2006.12235">[Paper]</a> <a href="https://www.youtube.com/watch?v=qCtNDh9EZNI&t=23s">[YouTube]
+				<a href="https://arxiv.org/abs/2006.12235">[Paper]</a> <a href="https://www.youtube.com/watch?v=qCtNDh9EZNI&t=23s">[YouTube]</a>
 			</p>
 		</td>
 
