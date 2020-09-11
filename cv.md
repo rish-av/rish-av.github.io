@@ -1,6 +1,6 @@
 ---
 layout: page
-title: CV
+title: CV (Last Updated: June 2020)
 permalink: "/cv/"
 
 
