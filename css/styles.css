@@ -41,7 +41,7 @@ papertitle {
 
 name {
   font-family: 'Lato', Verdana, Helvetica, sans-serif;
-  font-size: 36px;
+  font-size: 30px;
 }
 
 .one {
@@ -68,7 +68,8 @@ name {
 span.highlight {
   background-color: #ffffd0;
 }
-    .divScroll {
+
+.divScroll {
             overflow:scroll;
             overflow-x:hidden; 
             height:300px;
