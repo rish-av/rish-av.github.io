@@ -19,12 +19,12 @@ th,
 tr,
 p,
 a {
-  font-family: Lato;
+  font-family: 'Lato';
   font-size: 14px
 }
 
 strong {
-  font-family: Lato;
+  font-family: 'Lato';
   font-size: 14px;
 }
 
@@ -40,7 +40,7 @@ papertitle {
 }
 
 name {
-  font-family: Lato;
+  font-family: 'Lato';
   font-size: 30px;
 }
 
