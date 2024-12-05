@@ -5,7 +5,6 @@ permalink: /projects/
 description: A space for interesting ideas that I work on.
 nav: false
 nav_order: 2
-display_categories: [work, fun]
 horizontal: false
 ---
 
