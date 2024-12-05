@@ -256,7 +256,7 @@ display_tags: ['AI', 'Cooking', 'Adventures', 'History'] # these tags will be di
 # -----------------------------------------------------------------------------
 
 scholar:
-  bibliography: _bibliography/papers.bib
+  bibliography: /_bibliography/papers.bib
   style: apa # Adjust to your preferred citation style
 
 
