@@ -13,3 +13,46 @@ $max-content-width: {{ site.max_width }};
   "base",
   "distill"
 ;
+
+
+.publication {
+  margin-bottom: 2em;
+  padding-bottom: 1em;
+  border-bottom: 1px solid #eee;
+}
+
+.publication-title {
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-bottom: 0.5em;
+}
+
+.publication-authors {
+  color: #666;
+  margin-bottom: 0.3em;
+}
+
+.publication-info {
+  font-size: 0.9em;
+}
+
+.publication-links {
+  margin-top: 0.5em;
+}
+
+.publication-link {
+  display: inline-block;
+  padding: 0.2em 0.5em;
+  margin-right: 0.5em;
+  background: #f5f5f5;
+  border-radius: 3px;
+  text-decoration: none;
+  font-size: 0.9em;
+}
+
+.year {
+  margin-top: 2em;
+  margin-bottom: 1em;
+  padding-bottom: 0.5em;
+  border-bottom: 2px solid #333;
+}

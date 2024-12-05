@@ -1,0 +1,17 @@
+- title: "Your Paper Title"
+  authors: "Author 1, Author 2, Author 3"
+  venue: "Conference or Journal Name"
+  year: "2024"
+  links:
+    - name: PDF
+      url: /assets/papers/paper1.pdf
+    - name: Code
+      url: https://github.com/yourusername/project
+
+- title: "Another Paper Title"
+  authors: "Author 1, Author 2"
+  venue: "Another Conference"
+  year: "2023"
+  links:
+    - name: PDF
+      url: /assets/papers/paper2.pdf
