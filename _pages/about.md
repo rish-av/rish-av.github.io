@@ -16,7 +16,7 @@ selected_papers: false # includes a list of papers marked as "selected={true}"
 social: true  # includes social icons at the bottom of the page
 ---
 
-<!-- Hi! I am Shravan Nayak. I am pursuing my CS research masters at Mila and the University of Montreal under the guidance of Professor Aishwarya Agrawal. -->
+
 My name is Rishav. I am an engineer at heart and nothing excites me more than scale. My long term goal is to provide deep learning solutions to masses at scale. 
 I co-founded <a href="https://pitchbook.com/profiles/company/539173-27">Offside</a> where I developed the entire tech, scaled the product to <strong>100k users</strong> and raised <strong>$300k</strong>  from prominent VCs and angels. Unfortunately though, our intuition failed and the product was not able to cement a place in the market.
 
