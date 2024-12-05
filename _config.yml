@@ -257,24 +257,7 @@ display_tags: ['AI', 'Cooking', 'Adventures', 'History'] # these tags will be di
 
 scholar:
   style: apa
-  locale: en
   source: ./_bibliography
-  bibliography: papers.bib
-  bibliography_template: "{{reference}}"
-  sort_by: year,month
-  order: descending
-  
-  # Optional settings
-  details_dir: bibliography
-  details_layout: bibtex.html
-  details_link: Details
-  
-  # Citation settings
-  cite_class: citation
-  
-  # Markdown formatting
-  replace_strings: true
-  join_strings: true
 
 badges: # Display different badges for your publications
   altmetric_badge: true # Altmetric badge (https://www.altmetric.com/products/altmetric-badges/)
