@@ -40,11 +40,19 @@ layout: default
   </header>
 
   <article class="post-content">
-    {% if page.toc and page.toc.beginning %}
-    <div id="table-of-contents">
-      {% toc %}
+    {% if page.toc %}
+    <div class="table-of-contents">
+      <h2>Table of Contents</h2>
+      <ul>
+        {% assign content_array = content | split: '<h2' %}
+        {% for item in content_array offset: 1 %}
+          {% assign header = item | split: '</h2>' | first %}
+          {% assign title = header | split: '>' | last | strip %}
+          {% assign header_id = title | slugify %}
+          <li><a href="#{{ header_id }}">{{ title }}</a></li>
+        {% endfor %}
+      </ul>
     </div>
-    <hr>
     {% endif %}
     <div id="markdown-content">
       {{ content }}
