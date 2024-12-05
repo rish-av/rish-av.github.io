@@ -256,29 +256,25 @@ display_tags: ['AI', 'Cooking', 'Adventures', 'History'] # these tags will be di
 # -----------------------------------------------------------------------------
 
 scholar:
-
-  last_name: [Rishav]
-  first_name: [Rishav]
-
   style: apa
   locale: en
-
-  source: /_bibliography/
+  source: ./_bibliography
   bibliography: papers.bib
-  bibliography_template: bib
-  # Note: if you have latex math in your bibtex, the latex filter
-  # preprocessing may conflict with MathJAX if the latter is enabled.
-  # See https://github.com/alshedivat/al-folio/issues/357.
-  bibtex_filters: [latex, smallcaps, superscript]
-
-  replace_strings: true
-  join_strings: true
-
+  bibliography_template: "{{reference}}"
+  sort_by: year,month
+  order: descending
+  
+  # Optional settings
   details_dir: bibliography
   details_layout: bibtex.html
   details_link: Details
-
-  query: "@*"
+  
+  # Citation settings
+  cite_class: citation
+  
+  # Markdown formatting
+  replace_strings: true
+  join_strings: true
 
 badges: # Display different badges for your publications
   altmetric_badge: true # Altmetric badge (https://www.altmetric.com/products/altmetric-badges/)
