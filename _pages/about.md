@@ -1,25 +1,30 @@
 ---
 layout: about
-title: about
+title: About
 permalink: /
-subtitle: <a href='#'>Affiliations</a>. Address. Contacts. Motto. Etc.
+subtitle: 
 
 profile:
   align: right
-  image: prof_pic.jpg
+  image: rishav1.png
   image_circular: false # crops the image to make it circular
-  more_info: >
-    <p>555 your office number</p>
-    <p>123 your address street</p>
-    <p>Your City, State 12345</p>
+  address: >
 
-news: true # includes a list of news items
-selected_papers: true # includes a list of papers marked as "selected={true}"
-social: true # includes social icons at the bottom of the page
+news: true  # includes a list of news items
+latest_posts: false  # includes a list of the newest posts
+selected_papers: false # includes a list of papers marked as "selected={true}"
+social: true  # includes social icons at the bottom of the page
 ---
 
-Write your biography here. Tell the world about yourself. Link to your favorite [subreddit](http://reddit.com). You can put a picture in, too. The code is already in, just name your picture `prof_pic.jpg` and put it in the `img/` folder.
+<!-- Hi! I am Shravan Nayak. I am pursuing my CS research masters at Mila and the University of Montreal under the guidance of Professor Aishwarya Agrawal. -->
+My name is Rishav. I am an engineer at heart and nothing excites me more than scale. My long term goal is to provide deep learning solutions to masses at scale. <br> <br>
+I co-founded <a href="https://pitchbook.com/profiles/company/539173-27">Offside</a> where I developed the entire tech, scaled the product to <strong>100k users</strong> and raised <strong>$300k</strong>  from prominent VCs and angels. Unfortunately though, our intuition failed and the product was not able to cement a place in the market. <br><br>
+Even before that I spent ~2 amazing years in Kasierslautern, Germany working at <a href="http://dfk.de">DFKI</a> in the augmented vision department as a Research Engineer where I developed real-time algorithms for precision farming.
+<br><br>
 
-Put your address / P.O. box / other info right below your picture. You can also disable any of these elements by editing `profile` property of the YAML header of your `_pages/about.md`. Edit `_bibliography/papers.bib` and Jekyll will render your [publications page](/al-folio/publications/) automatically.
+I graduated from <a href="https://bits-pilani.ac.in/">BITS Pilani, India</a> with an undergraduate degree in Computer Science in 2020.
+<br><br>
+        
+My larger goal is to develop robust, scalable and reliable machine learning systems (currently exploring DeepRL & robotics systems). I often write blogs on my learnings in various projects and about life in general.
 
-Link to your social media connections, too. This theme is set up to use [Font Awesome icons](https://fontawesome.com/) and [Academicons](https://jpswalsh.github.io/academicons/), like the ones below. Add your Facebook, Twitter, LinkedIn, Google Scholar, or just disable all of them.
+While I am not working, I like to read about historical events, specially related to ancient civilizations or listen to music some old classic rock. I am a fan of historical dramas, trekking and strength training. Here's a <a href="https://docs.google.com/document/d/1SwqALVUDQwYLwcYRkBKflBR1P08o-aJ8VTfL9AOMepI/edit?usp=sharing"> TODO. </a>

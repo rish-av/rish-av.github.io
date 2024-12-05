@@ -1,9 +1,11 @@
-"AJP":
-  url: https://aapt.scitation.org/journal/ajp
-  color: "#00369f"
+"DVU":
+  url: "https://sites.google.com/view/dvu2020-workshop/home"
+  color: "#50C878"
 
-"PhysRev":
-  url: https://journals.aps.org/
+"PML4DC":
+  url: "https://pml4dc.github.io/iclr2023/"
+  color: "#50C878"
 
-"Vision":
-  color: "#009f36"
+"TiFA":
+  url: "https://icml-tifa.github.io/"
+  color: "#50C878"
