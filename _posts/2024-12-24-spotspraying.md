@@ -31,19 +31,34 @@ Actuation
 
 This project was developed to address the need for targeted weed and crop treatment in sugarbeet fields. I designed the system to distinguish sugarbeets from weeds, estimate weed density using depth data, and compute precise 3D coordinates to control a mechanical weeding nib. Due to field deployment constraints—including the lack of reliable internet connectivity and strict cost limitations—the solution was fully embedded and optimized for efficiency.
 
-The system began with the acquisition of synchronized RGB and depth images. The RGB images were processed using a semantic segmentation network based on a modified DeepLabV3+ architecture that classified each pixel as sugarbeet, weed, or background. To improve the network's ability to differentiate between crop growth stages and weed types, I integrated a channel attention module. This module refined the feature representation by computing a channel descriptor via global average pooling:
+### Semantic Segmentation with Channel Attention
 
-$$z_c = \frac{1}{H \times W} \sum_{i=1}^{H} \sum_{j=1}^{W} x_c(i,j)$$
+The system begins with the acquisition of synchronized RGB and depth images. RGB images are processed using a semantic segmentation network based on a modified DeepLabV3+ architecture, which classifies each pixel as sugarbeet, weed, or background. To enhance the network's performance in distinguishing between crops and weeds—especially when faced with variations in illumination, occlusions, or subtle texture differences—a channel attention module was integrated.
 
-where `x_c` is the feature map for channel `c`. The descriptor was then processed through two fully connected layers—with a ReLU activation followed by a sigmoid function—to generate channel-specific weights:
+**How Channel Attention Helps:**
+
+- **Adaptive Feature Recalibration:**  
+  Channel attention aggregates information across the spatial dimensions using global average pooling. This produces a compact descriptor for each channel that represents its overall importance. By learning channel-specific weights, the network can dynamically recalibrate features, emphasizing channels that capture critical cues (e.g., texture or color differences between sugarbeets and weeds) while suppressing less informative ones.
+
+- **Enhanced Discrimination:**  
+  The refined feature maps allow the segmentation network to better distinguish between similar classes. For instance, in scenarios where both sugarbeets and weeds share similar visual characteristics (like color under varying lighting), channel attention helps highlight subtle differences in the learned features, leading to improved classification accuracy.
+
+- **Robustness to Variability:**  
+  In field conditions, factors like weather changes, soil variations, or differences in crop growth stages can alter the appearance of plants. The channel attention mechanism adapts to these variations by adjusting the feature importance dynamically, contributing to the observed 19% improvement in Intersection over Union (IoU) after its integration.
+
+The channel attention module computes a channel descriptor via global average pooling:
+
+$$z_c = \frac{1}{H \times W} \sum_{i=1}^{H} \sum_{j=1}^{W} x_c(i,j),$$
+
+where `x_c` is the feature map for channel `c`. This descriptor is then processed through two fully connected layers—with a ReLU activation followed by a sigmoid function—to generate channel-specific weights:
 
 $$s = \sigma(W_2 \cdot \text{ReLU}(W_1 \cdot z)),$$
 
-which were used to rescale the original feature maps:
+which are used to rescale the original feature maps:
 
 $$\tilde{x}_c = s_c \cdot x_c.$$
 
-The following PyTorch code implemented the channel attention module:
+Below is the PyTorch code that implements this channel attention module:
 
 ```python
 import torch
@@ -66,6 +81,8 @@ class ChannelAttention(nn.Module):
         y = self.fc(y).view(b, c, 1, 1)
         return x * y
 ```
+
+By integrating channel attention, the system leverages a more discriminative feature representation, which is particularly beneficial in the challenging task of differentiating between similar plant classes in varying field conditions. This enhancement directly contributes to the overall accuracy and robustness of the precision weeding system.
 
 Since the data from Hydac were limited and slow to acquire, I initially trained the base model on a larger University of Bonn sugarbeet dataset and later used transfer learning to fine-tune the model on the Hydac data.
 
