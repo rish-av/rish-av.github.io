@@ -69,7 +69,7 @@ class ChannelAttention(nn.Module):
 
 Since the data from Hydac were limited and slow to acquire, I initially trained the base model on a larger University of Bonn sugarbeet dataset and later used transfer learning to fine-tune the model on the Hydac data.
 
-After semantic segmentation, the depth data were used to project the 2D segmentation mask into 3D space using the intrinsic camera matrix $K$:
+After semantic segmentation, the depth data were used to project the 2D segmentation mask into 3D space using the intrinsic camera matrix `K`:
 
 $$
 \begin{bmatrix}
