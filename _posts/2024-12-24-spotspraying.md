@@ -1,12 +1,14 @@
+Below is the revised post with the additional content integrated into the main text:
+
 ---
-layout: post
-title: Precision Weeding in Sugarbeets - A Scientific Exploration of a Real-Time Computer Vision System
-date: 2024-12-25 21:00:00
-description: Spot Spraying Project
-tags: spotspraying, precision agriculture
-categories: ai
-thumbnail: assets/img/spot_spraying.png
----
+
+layout: post  
+title: Precision Weeding in Sugarbeets - A Scientific Exploration of a Real-Time Computer Vision System  
+date: 2024-12-25 21:00:00  
+description: Spot Spraying Project  
+tags: spotspraying, precision agriculture  
+categories: ai  
+thumbnail: assets/img/spot_spraying.png  
 
 **Figure 1: System Flowchart**  
 ```
@@ -129,31 +131,84 @@ $$
 
 I determined the optimal scale $$s^*$$ that minimized quantization error.
 
-To facilitate efficient deployment in the C++ inference pipeline, I froze the weights and set the model to trace mode using **libtorch**. This process created a static computation graph optimized for inference. An example of tracing a model in PyTorch is shown below:
+To facilitate efficient deployment in the C++ inference pipeline, I froze the weights and set the model to trace mode using **libtorch**. This process created a static computation graph optimized for inference. An example of tracing a model and subsequent onnx file generation in PyTorch is shown below:
 
 ```python
 import torch
 
 # Assume 'model' is an instance of CustomSegNet with loaded weights.
-model.eval()  # Freeze batch normalization, dropout, etc.
+model.eval()  # Set to evaluation mode to freeze batch normalization, dropout, etc.
 example_input = torch.randn(1, 3, 512, 512)  # Example input matching expected shape
 traced_model = torch.jit.trace(model, example_input)
 traced_model.save("model_traced.pt")
+
+# Export the traced model to ONNX format
+torch.onnx.export(
+    model, 
+    example_input, 
+    "model_int8.onnx", 
+    export_params=True,
+    opset_version=11,
+    do_constant_folding=True,
+    input_names=['input'],
+    output_names=['output']
+)
 ```
 
-The traced model, with frozen weights and a static graph, was then exported to ONNX format and integrated into the C++ pipeline.
 
-After exporting the model to ONNX, I integrated Triton for further optimization of the INT8 inference pipeline. With Triton, the system achieved high throughput while maintaining accuracy. The following C++ pseudocode illustrates the inference loop using Triton:
+
+### Integration with Hailo AI for Enhanced Inference
+
+The traced model, with frozen weights and a static graph, was then exported to ONNX format and integrated into the C++ pipeline. After exporting the model to ONNX and integrating it into the C++ pipeline, I employed Hailo AI's proprietary inference server for optimized INT8 execution. While the Hailo AI inference server is not publicly available, the following pseudocode illustrates a conceptual inference loop using the Hailo API:
 
 ```cpp
-// Pseudo-code for Triton-based INT8 inference
-#include "triton_inference.h"  // Hypothetical header for Triton integration
+// Pseudocode for Hailo AI-based INT8 inference
+#include "hailo_inference.h"  // Hypothetical header for Hailo AI integration
 
-TritonEngine engine("model_int8.onnx");
-auto inputTensor = prepareInputTensor(inputImageInt8); // Preprocess image data
-auto output = engine.runInference(inputTensor);          // Execute inference via Triton
-auto segmentationMask = processOutput(output);           // Post-process to obtain segmentation mask
+// Initialize the Hailo engine with the INT8 model
+HailoEngine hailoEngine("model_int8.onnx");
+
+// Prepare the input tensor from the preprocessed image data (in INT8 format)
+Tensor inputTensor = prepareInputTensor(inputImageInt8); 
+
+// Run inference using the Hailo AI inference server
+Tensor outputTensor = hailoEngine.runInference(inputTensor);
+
+// Process the output tensor to obtain the segmentation mask
+SegmentationMask segmentationMask = processOutput(outputTensor);
+
+// Further post-processing as required...
 ```
+
+**Motivation for Precision Spot Spraying**
+
+Conventional spraying systems typically apply herbicides uniformly across entire fields, which often results in excessive chemical usage. This blanket approach not only increases operational costs but also poses risks to the environment and non-target crops. By accurately identifying weed-infested areas through real-time semantic segmentation and depth estimation, the system can target only the affected spots. This precise application minimizes herbicide waste, reduces chemical runoff, and enhances overall field sustainability.
+
+**Weedicide Usage Calculation**
+
+To determine the optimal amount of weedicide required, we can compute the effective area covered by weeds by combining the segmentation map with the depth information. Let`(S(u,v)` be the binary segmentation map, where:
+
+$$
+S(u,v) = 
+\begin{cases}
+1, & \text{if pixel } (u,v) \text{ is classified as weed} \\
+0, & \text{otherwise}
+\end{cases}
+$$
+
+and let `d(u,v)` denote the depth at pixel `(u,v)`. Using a pinhole camera model, the real-world area corresponding to a pixel can be approximated by:
+
+$$A_{pixel}(u,v) = \left(\frac{d(u,v)}{f}\right)^2,$$
+
+where `f` is the focal length of the camera. Thus, the total weed-covered area `A_w` is given by:
+
+$$A_w = \sum_{u,v} S(u,v) \cdot \left(\frac{d(u,v)}{f}\right)^2.$$
+
+Finally, if $$\beta$$ represents the application rate of the herbicide (in liters per square meter), the total amount of weedicide to be applied is:
+
+$$\text{Weedicide Amount} = \beta \cdot A_w.$$
+
+This approach ensures that the herbicide is dispensed only where needed, thereby reducing excess use and environmental impact.
 
 **Key results include:**  
 - **A 19% increase in IoU** after integrating the channel attention module.  
