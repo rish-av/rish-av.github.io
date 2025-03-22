@@ -10,4 +10,4 @@ related_publications: false
 
 ## Spot Spraying
 
-My project at DFKI with HYDAC. Built a robotic system for identifying & localizing weeds/crops for spot-spraying. More about the project: ![Blog Link]()
+My project at DFKI with HYDAC. Built a robotic system for identifying & localizing weeds/crops for spot-spraying. More about the project: ![Blog Link](https://rish-av.github.io/blog/2024/spotspraying/)

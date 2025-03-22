@@ -9,6 +9,3 @@ related_publications: false
 ---
 ### Resources
 - **Code Repository:** [GitHub Link](https://github.com/rish-av/ganvo)
-
-### Screenshot
-![Generative Adversarial Networks for Visual Odometry](assets/img/750px.png)

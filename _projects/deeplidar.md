@@ -13,7 +13,5 @@ Scene flow is the dense 3D reconstruction of motion and geometry of a scene. Mos
 
 ### Resources
 - **Code Repository:** [GitHub Link](https://github.com/dfki-av/DeepLiDARFlow)
+- **Paper:** [ArXiV](https://arxiv.org/abs/2008.08136)
 
-
-### Screenshot
-![DeepLiDARFlow](assets/img/deeplidarflow.png)
