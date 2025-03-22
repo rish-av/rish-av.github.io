@@ -1,14 +1,12 @@
-Below is the revised post with the additional content integrated into the main text:
-
 ---
-
-layout: post  
-title: Precision Weeding in Sugarbeets - A Scientific Exploration of a Real-Time Computer Vision System  
-date: 2024-12-25 21:00:00  
-description: Spot Spraying Project  
-tags: spotspraying, precision agriculture  
-categories: ai  
-thumbnail: assets/img/spot_spraying.png  
+layout: post
+title: Precision Weeding in Sugarbeets - A Scientific Exploration of a Real-Time Computer Vision System
+date: 2024-12-25 21:00:00
+description: Spot Spraying Project
+tags: spotspraying, precision agriculture
+categories: ai
+thumbnail: assets/img/spot_spraying.png
+---
 
 **Figure 1: System Flowchart**  
 ```
