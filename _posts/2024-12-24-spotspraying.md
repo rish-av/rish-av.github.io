@@ -35,7 +35,7 @@ The system began with the acquisition of synchronized RGB and depth images. The 
 
 $$z_c = \frac{1}{H \times W} \sum_{i=1}^{H} \sum_{j=1}^{W} x_c(i,j)$$
 
-where $x_c$ is the feature map for channel $c$. The descriptor was then processed through two fully connected layers—with a ReLU activation followed by a sigmoid function—to generate channel-specific weights:
+where `x_c` is the feature map for channel `c`. The descriptor was then processed through two fully connected layers—with a ReLU activation followed by a sigmoid function—to generate channel-specific weights:
 
 $$s = \sigma(W_2 \cdot \text{ReLU}(W_1 \cdot z)),$$
 
@@ -84,7 +84,7 @@ v \\
 \end{bmatrix},
 $$
 
-where $d(u,v)$ is the depth at pixel $(u,v)$. Clustering these 3D points yielded estimates of weed density and calculated the average spatial coordinates for each weed cluster, which were then used for actuation.
+where `d(u,v)` is the depth at pixel `(u,v)`. Clustering these 3D points yielded estimates of weed density and calculated the average spatial coordinates for each weed cluster, which were then used for actuation.
 
 For the coordinate transformation from the camera frame to the actuator frame, I used a pre-computed transformation matrix. In C++, the transformation was implemented as follows:
 
@@ -111,25 +111,23 @@ model_fp32 = CustomSegNet(num_classes=3)
 model_int8 = quant.quantize_dynamic(model_fp32, {nn.Conv2d, nn.Linear}, dtype=torch.qint8)
 ```
 
-In addition to dynamic quantization, I employed Quantization Aware Training (QAT) to further reduce quantization error. During QAT, fake quantization layers simulated INT8 precision during training. The quantization function for an activation \(x\) was defined as:
+In addition to dynamic quantization, I employed Quantization Aware Training (QAT) to further reduce quantization error. During QAT, fake quantization layers simulated INT8 precision during training. The quantization function for an activation `x` was defined as:
 
 $$
 \hat{x} = Q(x) = s \cdot \text{clip}\left(\left\lfloor \frac{x}{s} \right\rceil, -q_{\min}, q_{\max}\right),
 $$
 
-where $s$ is the scale factor and $\lfloor \cdot \rceil$ denotes rounding. The Straight-Through Estimator (STE) approximated the gradient:
+where `s` is the scale factor and $$\lfloor \cdot \rceil$$ denotes rounding. The Straight-Through Estimator (STE) approximated the gradient:
 
-$$
-\frac{\partial L}{\partial x} \approx \frac{\partial L}{\partial \hat{x}}.
-$$
+$$\frac{\partial L}{\partial x} \approx \frac{\partial L}{\partial \hat{x}}.$$
 
-A crucial part of QAT was calibrating the quantization parameters using the histogram of gradients $H(g)$, where $g = \frac{\partial L}{\partial x}$. By minimizing the Kullback-Leibler divergence between the full-precision gradient distribution $P(g)$ and the quantized distribution $Q(g; s)$:
+A crucial part of QAT was calibrating the quantization parameters using the histogram of gradients `H(g)`, where $$g = \frac{\partial L}{\partial x}.$$ By minimizing the Kullback-Leibler divergence between the full-precision gradient distribution `P(g)` and the quantized distribution `Q(g; s)`:
 
 $$
 s^* = \arg\min_{s} \, \mathrm{KL}(P(g) \parallel Q(g; s)) = \arg\min_{s} \sum_{i} P(g_i) \log \frac{P(g_i)}{Q(g_i; s)},
 $$
 
-I determined the optimal scale $s^*$ that minimized quantization error.
+I determined the optimal scale $$s^*$$ that minimized quantization error.
 
 To facilitate efficient deployment in the C++ inference pipeline, I froze the weights and set the model to trace mode using **libtorch**. This process created a static computation graph optimized for inference. An example of tracing a model in PyTorch is shown below:
 
