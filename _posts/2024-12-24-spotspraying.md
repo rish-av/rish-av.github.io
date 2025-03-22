@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Precision Weeding in Sugarbeets - A Scientific Exploration of a Real-Time Computer Vision System
-date: 2023-11-27 21:00:00
+date: 2024-12-25 21:00:00
 description: Spot Spraying Project
 tags: spotspraying, precision agriculture
 categories: ai
