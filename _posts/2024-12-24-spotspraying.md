@@ -7,7 +7,6 @@ tags: spotspraying, precision agriculture
 categories: ai
 thumbnail: assets/img/spot_spraying.png
 ---
-# Precision Weeding in Sugarbeets: A Scientific Exploration of a Real-Time Computer Vision System
 
 **Figure 1: System Flowchart**  
 ```
@@ -36,7 +35,7 @@ The system began with the acquisition of synchronized RGB and depth images. The 
 
 $$z_c = \frac{1}{H \times W} \sum_{i=1}^{H} \sum_{j=1}^{W} x_c(i,j)$$
 
-where \(x_c\) is the feature map for channel \(c\). The descriptor was then processed through two fully connected layers—with a ReLU activation followed by a sigmoid function—to generate channel-specific weights:
+where $x_c$ is the feature map for channel $c$. The descriptor was then processed through two fully connected layers—with a ReLU activation followed by a sigmoid function—to generate channel-specific weights:
 
 $$s = \sigma(W_2 \cdot \text{ReLU}(W_1 \cdot z)),$$
 
@@ -124,7 +123,7 @@ $$
 \frac{\partial L}{\partial x} \approx \frac{\partial L}{\partial \hat{x}}.
 $$
 
-A crucial part of QAT was calibrating the quantization parameters using the histogram of gradients $H(g)$, where $g = \frac{\partial L}{\partial x}$. By minimizing the Kullback-Leibler divergence between the full-precision gradient distribution $P(g)$ and the quantized distribution $Q(g; s)$:
+A crucial part of QAT was calibrating the quantization parameters using the histogram of gradients \(H(g)\) $, where $g = \frac{\partial L}{\partial x}$. By minimizing the Kullback-Leibler divergence between the full-precision gradient distribution $P(g)$ and the quantized distribution $Q(g; s)$:
 
 $$
 s^* = \arg\min_{s} \, \mathrm{KL}(P(g) \parallel Q(g; s)) = \arg\min_{s} \sum_{i} P(g_i) \log \frac{P(g_i)}{Q(g_i; s)},
