@@ -123,7 +123,7 @@ $$
 \frac{\partial L}{\partial x} \approx \frac{\partial L}{\partial \hat{x}}.
 $$
 
-A crucial part of QAT was calibrating the quantization parameters using the histogram of gradients \(H(g)\) $, where $g = \frac{\partial L}{\partial x}$. By minimizing the Kullback-Leibler divergence between the full-precision gradient distribution $P(g)$ and the quantized distribution $Q(g; s)$:
+A crucial part of QAT was calibrating the quantization parameters using the histogram of gradients $`H(g)`$, where $`g = \frac{\partial L}{\partial x}`$. By minimizing the Kullback-Leibler divergence between the full-precision gradient distribution $P(g)$ and the quantized distribution $Q(g; s)$:
 
 $$
 s^* = \arg\min_{s} \, \mathrm{KL}(P(g) \parallel Q(g; s)) = \arg\min_{s} \sum_{i} P(g_i) \log \frac{P(g_i)}{Q(g_i; s)},
