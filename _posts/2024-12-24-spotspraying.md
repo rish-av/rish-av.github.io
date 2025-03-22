@@ -7,8 +7,14 @@ tags: spotspraying, precision agriculture
 categories: ai
 thumbnail: assets/img/spot_spraying.png
 ---
+## Introduction
 
-**Figure 1: System Flowchart**  
+Conventional spraying methods apply herbicides uniformly across fields, resulting in excessive chemical use, environmental risks, and increased operational costs. This project implements a precision weeding system for sugarbeet fields by combining semantic segmentation, depth sensing, and advanced model optimization techniques. The system targets only weed-infested areas, reducing herbicide usage and minimizing environmental impact.
+
+## System Overview
+
+The system pipeline is summarized in the following flowchart:
+
 ```
 RGB + Depth Images
        │
@@ -17,48 +23,53 @@ Semantic Segmentation
 (DeepLabV3+ with Channel Attention)
        │
        ▼
-Depth Projection 
-(using Intrinsic Matrix K⁻¹)
+Depth Projection & 3D Processing
        │
        ▼
-3D Localization 
-(Clustering for Weed Density Estimation)
-       │
-       ▼
-Actuation 
-(Coordinate Transformation & Control)
+Field Actuation (Coordinate Transformation & Control)
 ```
 
-This project was developed to address the need for targeted weed and crop treatment in sugarbeet fields. I designed the system to distinguish sugarbeets from weeds, estimate weed density using depth data, and compute precise 3D coordinates to control a mechanical weeding nib. Due to field deployment constraints—including the lack of reliable internet connectivity and strict cost limitations—the solution was fully embedded and optimized for efficiency.
+The process begins with the acquisition of synchronized RGB and depth images. It then uses semantic segmentation to distinguish sugarbeets from weeds, followed by processing to obtain 3D information. Finally, the system translates these 3D coordinates to guide precise actuation in the field.
 
-### Semantic Segmentation with Channel Attention
+## Semantic Segmentation with Channel Attention
 
-The system begins with the acquisition of synchronized RGB and depth images. RGB images are processed using a semantic segmentation network based on a modified DeepLabV3+ architecture, which classifies each pixel as sugarbeet, weed, or background. To enhance the network's performance in distinguishing between crops and weeds—especially when faced with variations in illumination, occlusions, or subtle texture differences—a channel attention module was integrated.
+### Overview
 
-**How Channel Attention Helps:**
+The segmentation network is built on a modified DeepLabV3+ architecture that classifies each pixel as sugarbeet, weed, or background. A channel attention module enhances the network's ability to differentiate between crops and weeds, even under challenging conditions such as variable illumination, occlusions, or subtle texture differences.
+
+### Benefits of Channel Attention
 
 - **Adaptive Feature Recalibration:**  
-  Channel attention aggregates information across the spatial dimensions using global average pooling. This produces a compact descriptor for each channel that represents its overall importance. By learning channel-specific weights, the network can dynamically recalibrate features, emphasizing channels that capture critical cues (e.g., texture or color differences between sugarbeets and weeds) while suppressing less informative ones.
+  Global average pooling generates a channel descriptor that is then processed to produce channel-specific weights. This allows the network to emphasize important features while suppressing less informative ones.
 
 - **Enhanced Discrimination:**  
-  The refined feature maps allow the segmentation network to better distinguish between similar classes. For instance, in scenarios where both sugarbeets and weeds share similar visual characteristics (like color under varying lighting), channel attention helps highlight subtle differences in the learned features, leading to improved classification accuracy.
+  Recalibrated feature maps improve the network’s ability to distinguish between visually similar classes, leading to a  
+  $$\textbf{19\% increase in Intersection over Union (IoU)}$$.
 
 - **Robustness to Variability:**  
-  In field conditions, factors like weather changes, soil variations, or differences in crop growth stages can alter the appearance of plants. The channel attention mechanism adapts to these variations by adjusting the feature importance dynamically, contributing to the observed 19% improvement in Intersection over Union (IoU) after its integration.
+  Dynamic adjustment of feature importance helps maintain consistent performance despite changes in weather, soil, or crop growth stages.
+
+### Mathematical Formulation
 
 The channel attention module computes a channel descriptor via global average pooling:
 
-$$z_c = \frac{1}{H \times W} \sum_{i=1}^{H} \sum_{j=1}^{W} x_c(i,j),$$
+$$
+z_c = \frac{1}{H \times W} \sum_{i=1}^{H} \sum_{j=1}^{W} x_c(i,j),
+$$
 
-where `x_c` is the feature map for channel `c`. This descriptor is then processed through two fully connected layers—with a ReLU activation followed by a sigmoid function—to generate channel-specific weights:
+which is transformed into channel-specific weights using:
 
-$$s = \sigma(W_2 \cdot \text{ReLU}(W_1 \cdot z)),$$
+$$
+s = \sigma(W_2 \cdot \text{ReLU}(W_1 \cdot z)),
+$$
 
-which are used to rescale the original feature maps:
+and applied to rescale the feature maps:
 
-$$\tilde{x}_c = s_c \cdot x_c.$$
+$$
+\tilde{x}_c = s_c \cdot x_c.
+$$
 
-Below is the PyTorch code that implements this channel attention module:
+### PyTorch Implementation
 
 ```python
 import torch
@@ -82,11 +93,78 @@ class ChannelAttention(nn.Module):
         return x * y
 ```
 
-By integrating channel attention, the system leverages a more discriminative feature representation, which is particularly beneficial in the challenging task of differentiating between similar plant classes in varying field conditions. This enhancement directly contributes to the overall accuracy and robustness of the precision weeding system.
+## Real-Time Deployment and Model Optimization
 
-Since the data from Hydac were limited and slow to acquire, I initially trained the base model on a larger University of Bonn sugarbeet dataset and later used transfer learning to fine-tune the model on the Hydac data.
+### Embedded System Architecture
 
-After semantic segmentation, the depth data were used to project the 2D segmentation mask into 3D space using the intrinsic camera matrix `K`:
+Due to remote field conditions and limited internet connectivity, the entire inference pipeline is implemented in C++ and deployed on an NXP i.MX8 board running Yocto Linux with a Hailo-8 accelerator. **libtorch** is used to integrate the PyTorch models into the C++ environment, ensuring seamless execution in the field.
+
+### Model Optimization Techniques
+
+- **INT8 Quantization:**  
+  The model is optimized for real-time performance using INT8 precision. This involves:
+  
+  - **Dynamic Quantization:**
+
+    ```python
+    import torch.quantization as quant
+
+    model_fp32 = CustomSegNet(num_classes=3)
+    model_int8 = quant.quantize_dynamic(model_fp32, {nn.Conv2d, nn.Linear}, dtype=torch.qint8)
+    ```
+
+  - **Quantization Aware Training (QAT):**  
+    During QAT, fake quantization layers simulate INT8 precision. The activation quantization function is defined as:
+
+    $$
+    \hat{x} = Q(x) = s \cdot \text{clip}\left(\left\lfloor \frac{x}{s} \right\rceil, -q_{\min}, q_{\max}\right),
+    $$
+
+    where $$s$$ is the scale factor and $$\lfloor \cdot \rceil$$ denotes rounding. The gradient is approximated via:
+
+    $$
+    \frac{\partial L}{\partial x} \approx \frac{\partial L}{\partial \hat{x}}.
+    $$
+
+    The optimal scale $$s^*$$ minimizes the Kullback-Leibler divergence between the full-precision gradient distribution $$P(g)$$ and the quantized distribution $$Q(g; s)$$:
+
+    $$
+    s^* = \arg\min_{s} \, \mathrm{KL}(P(g) \parallel Q(g; s)) = \arg\min_{s} \sum_{i} P(g_i) \log \frac{P(g_i)}{Q(g_i; s)}.
+    $$
+
+- **Model Freezing and Tracing:**  
+  The optimized model is frozen and traced using **libtorch**, resulting in a static computation graph that is exported to the ONNX format:
+
+    ```python
+    import torch
+
+    model.eval()  # Freeze layers like batch normalization and dropout
+    example_input = torch.randn(1, 3, 512, 512)
+    traced_model = torch.jit.trace(model, example_input)
+    traced_model.save("model_traced.pt")
+
+    torch.onnx.export(
+        model, 
+        example_input, 
+        "model_int8.onnx", 
+        export_params=True,
+        opset_version=11,
+        do_constant_folding=True,
+        input_names=['input'],
+        output_names=['output']
+    )
+    ```
+
+- **Integration with Hailo AI:**  
+  The traced ONNX model is integrated into the C++ inference pipeline and executed using the Hailo AI inference server, providing optimized INT8 performance for real-time processing.
+
+## Field Actuation and 3D Processing
+
+After real-time inference, the system must translate the segmentation output into actionable data for field actuation. This section integrates depth projection, 3D localization, and coordinate transformation.
+
+### Depth Projection and 3D Localization
+
+The 2D segmentation mask is projected into 3D space using the intrinsic camera matrix $$K$$:
 
 $$
 \begin{bmatrix}
@@ -101,14 +179,18 @@ v \\
 \end{bmatrix},
 $$
 
-where `d(u,v)` is the depth at pixel `(u,v)`. Clustering these 3D points yielded estimates of weed density and calculated the average spatial coordinates for each weed cluster, which were then used for actuation.
+where $$d(u,v)$$ represents the depth at pixel $$(u,v)$$. Clustering the resulting 3D points enables the estimation of weed density and the computation of average spatial coordinates for each weed cluster.
 
-For the coordinate transformation from the camera frame to the actuator frame, I used a pre-computed transformation matrix. In C++, the transformation was implemented as follows:
+### Coordinate Transformation for Field Actuation
+
+To accurately guide the mechanical weeding nib, the computed 3D coordinates (initially defined in the camera frame) must be transformed into the machine’s coordinate system. This alignment is performed using a pre-computed transformation matrix.
+
+#### C++ Implementation
 
 ```cpp
 #include <Eigen/Dense>
 
-Eigen::Matrix4f getTransformMatrix();  // Function that retrieves the transformation matrix
+Eigen::Matrix4f getTransformMatrix();  // Retrieves the transformation matrix
 
 Eigen::Vector4f getPlantCoordinates(float x, float y, float z) {
     Eigen::Matrix4f camToActuator = getTransformMatrix();
@@ -117,119 +199,63 @@ Eigen::Vector4f getPlantCoordinates(float x, float y, float z) {
 }
 ```
 
-Due to remote field conditions where online processing was not feasible, I implemented the entire inference pipeline in C++ and deployed it on an NXP i.MX8 board running Yocto Linux with a Hailo-8 accelerator. For model deployment, I used **libtorch** to integrate my PyTorch models into the C++ inference pipeline.
+This transformation ensures that the machine’s location in the field is accurately adjusted for effective actuation.
 
-To achieve real-time performance, I optimized the deep learning model using INT8 precision. Initially, I applied dynamic quantization in PyTorch:
+## Weedicide Usage Calculation and Motivation
 
-```python
-import torch.quantization as quant
+### Why Precision Spot Spraying?
 
-model_fp32 = CustomSegNet(num_classes=3)
-model_int8 = quant.quantize_dynamic(model_fp32, {nn.Conv2d, nn.Linear}, dtype=torch.qint8)
-```
+Conventional systems apply herbicides uniformly, often wasting chemicals and affecting non-target crops. By precisely identifying weed-infested areas using real-time semantic segmentation and depth estimation, the system applies herbicides only where necessary, reducing chemical waste and environmental impact.
 
-In addition to dynamic quantization, I employed Quantization Aware Training (QAT) to further reduce quantization error. During QAT, fake quantization layers simulated INT8 precision during training. The quantization function for an activation `x` was defined as:
+### Calculating Weedicide Requirements
 
-$$
-\hat{x} = Q(x) = s \cdot \text{clip}\left(\left\lfloor \frac{x}{s} \right\rceil, -q_{\min}, q_{\max}\right),
-$$
+1. **Segmentation Map $$S(u,v)$$:**
 
-where `s` is the scale factor and $$\lfloor \cdot \rceil$$ denotes rounding. The Straight-Through Estimator (STE) approximated the gradient:
+    $$
+    S(u,v) = 
+    \begin{cases}
+    1, & \text{if pixel } (u,v) \text{ is classified as weed} \\
+    0, & \text{otherwise}
+    \end{cases}
+    $$
 
-$$\frac{\partial L}{\partial x} \approx \frac{\partial L}{\partial \hat{x}}.$$
+2. **Real-World Area Calculation:**  
+   The area corresponding to a pixel is approximated by:
 
-A crucial part of QAT was calibrating the quantization parameters using the histogram of gradients `H(g)`, where $$g = \frac{\partial L}{\partial x}.$$ By minimizing the Kullback-Leibler divergence between the full-precision gradient distribution `P(g)` and the quantized distribution `Q(g; s)`:
+    $$
+    A_{pixel}(u,v) = \left(\frac{d(u,v)}{f}\right)^2,
+    $$
 
-$$
-s^* = \arg\min_{s} \, \mathrm{KL}(P(g) \parallel Q(g; s)) = \arg\min_{s} \sum_{i} P(g_i) \log \frac{P(g_i)}{Q(g_i; s)},
-$$
+    where $$d(u,v)$$ is the depth at pixel $$(u,v)$$ and $$f$$ is the focal length.
 
-I determined the optimal scale $$s^*$$ that minimized quantization error.
+3. **Total Weed-Covered Area $$A_w$$:**
 
-To facilitate efficient deployment in the C++ inference pipeline, I froze the weights and set the model to trace mode using **libtorch**. This process created a static computation graph optimized for inference. An example of tracing a model and subsequent onnx file generation in PyTorch is shown below:
+    $$
+    A_w = \sum_{u,v} S(u,v) \cdot \left(\frac{d(u,v)}{f}\right)^2.
+    $$
 
-```python
-import torch
+4. **Herbicide Amount:**  
+   Given $$\beta$$ as the application rate (liters per square meter), the total herbicide required is:
 
-# Assume 'model' is an instance of CustomSegNet with loaded weights.
-model.eval()  # Set to evaluation mode to freeze batch normalization, dropout, etc.
-example_input = torch.randn(1, 3, 512, 512)  # Example input matching expected shape
-traced_model = torch.jit.trace(model, example_input)
-traced_model.save("model_traced.pt")
+    $$
+    \text{Weedicide Amount} = \beta \cdot A_w.
+    $$
 
-# Export the traced model to ONNX format
-torch.onnx.export(
-    model, 
-    example_input, 
-    "model_int8.onnx", 
-    export_params=True,
-    opset_version=11,
-    do_constant_folding=True,
-    input_names=['input'],
-    output_names=['output']
-)
-```
+This calculation guarantees that herbicide is applied only where needed.
 
+## Key Results
+
+- **Improved Segmentation Accuracy:**  
+  Integration of the channel attention module resulted in a  
+  $$\textbf{19\% increase in IoU}$$.
+
+- **Enhanced Processing Speed:**  
+  Optimizations increased the frame rate from **1.3 fps to 32 fps** on the NVIDIA Xavier AGX platform.
+
+- **Real-Time Deployment:**  
+  The embedded system on an NXP board achieved **23 fps** with INT8 quantization.
 
 
-### Integration with Hailo AI for Enhanced Inference
+## Conclusion
 
-The traced model, with frozen weights and a static graph, was then exported to ONNX format and integrated into the C++ pipeline. After exporting the model to ONNX and integrating it into the C++ pipeline, I employed Hailo AI's proprietary inference server for optimized INT8 execution. While the Hailo AI inference server is not publicly available, the following pseudocode illustrates a conceptual inference loop using the Hailo API:
-
-```cpp
-// Pseudocode for Hailo AI-based INT8 inference
-#include "hailo_inference.h"  // Hypothetical header for Hailo AI integration
-
-// Initialize the Hailo engine with the INT8 model
-HailoEngine hailoEngine("model_int8.onnx");
-
-// Prepare the input tensor from the preprocessed image data (in INT8 format)
-Tensor inputTensor = prepareInputTensor(inputImageInt8); 
-
-// Run inference using the Hailo AI inference server
-Tensor outputTensor = hailoEngine.runInference(inputTensor);
-
-// Process the output tensor to obtain the segmentation mask
-SegmentationMask segmentationMask = processOutput(outputTensor);
-
-// Further post-processing as required...
-```
-
-**Motivation for Precision Spot Spraying**
-
-Conventional spraying systems typically apply herbicides uniformly across entire fields, which often results in excessive chemical usage. This blanket approach not only increases operational costs but also poses risks to the environment and non-target crops. By accurately identifying weed-infested areas through real-time semantic segmentation and depth estimation, the system can target only the affected spots. This precise application minimizes herbicide waste, reduces chemical runoff, and enhances overall field sustainability.
-
-**Weedicide Usage Calculation**
-
-To determine the optimal amount of weedicide required, we can compute the effective area covered by weeds by combining the segmentation map with the depth information. Let`(S(u,v)` be the binary segmentation map, where:
-
-$$
-S(u,v) = 
-\begin{cases}
-1, & \text{if pixel } (u,v) \text{ is classified as weed} \\
-0, & \text{otherwise}
-\end{cases}
-$$
-
-and let `d(u,v)` denote the depth at pixel `(u,v)`. Using a pinhole camera model, the real-world area corresponding to a pixel can be approximated by:
-
-$$A_{pixel}(u,v) = \left(\frac{d(u,v)}{f}\right)^2,$$
-
-where `f` is the focal length of the camera. Thus, the total weed-covered area `A_w` is given by:
-
-$$A_w = \sum_{u,v} S(u,v) \cdot \left(\frac{d(u,v)}{f}\right)^2.$$
-
-Finally, if $$\beta$$ represents the application rate of the herbicide (in liters per square meter), the total amount of weedicide to be applied is:
-
-$$\text{Weedicide Amount} = \beta \cdot A_w.$$
-
-This approach ensures that the herbicide is dispensed only where needed, thereby reducing excess use and environmental impact.
-
-**Key results include:**  
-- **A 19% increase in IoU** after integrating the channel attention module.  
-- **An improvement from 1.3 fps to 32 fps** on the NVIDIA Xavier AGX platform using knowledge distillation and TensorRT optimization.  
-- **Deployment on an NXP board achieving 23 fps** with 8-bit quantization.
-
-Field tests were conducted to evaluate the system under realistic conditions, and the results confirmed its ability to perform real-time targeted weed and crop treatment in sugarbeet fields.
-
-In summary, this project described a method for precision weeding that combined semantic segmentation with channel attention, 3D localization using depth data, and several model optimizations including INT8 quantization, Quantization Aware Training (with gradient histogram calibration), and model freezing and tracing using libtorch. Transfer learning was employed to fine-tune the model on limited Hydac data after pre-training on a larger University of Bonn sugarbeet dataset. This approach addressed challenges associated with data scarcity and slow data acquisition, and the system was validated through field tests.
+This project demonstrates a comprehensive approach to precision weeding in sugarbeet fields. By combining advanced semantic segmentation with robust model optimizations and efficient embedded deployment, the system offers a scalable solution for targeted weed treatment. The integrated field actuation module—comprising depth projection, 3D localization, and coordinate transformation—ensures that the machine's location is accurately adjusted for precise herbicide application. This method not only reduces herbicide waste and environmental impact but also offers significant cost savings and improved operational efficiency—key benefits for modern precision agriculture.
