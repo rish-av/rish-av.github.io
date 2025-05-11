@@ -17,7 +17,7 @@ social: true  # includes social icons at the bottom of the page
 ---
 
 
-I'm Rishav, an engineer at heart driven by the challenge of building machine learning systems that work reliably at scale. I’m a graduate student at [Mila](https://mila.quebec/en), where my research focuses on real-time and explainable reinforcement learning. My long-term goal is to build trustworthy systems that can learn efficiently from feedback—unlike current ML models that require millions of samples for even basic tasks. I’m also a co-organizer of a workshop on explainability in deep learning at [CRV](https://dd-xml.github.io/).
+I'm Rishav, an engineer at heart driven by the challenge of building machine learning systems that work reliably at scale. I’m at [Mila](https://mila.quebec/en), where my research focuses on real-time and explainable reinforcement learning. My long-term goal is to build trustworthy systems that can learn efficiently from feedback—unlike current ML models that require millions of samples for even basic tasks. 
 
 I previously co-founded [Offside](https://pitchbook.com/profiles/company/539173-27), where I built and scaled the product to 100k users and raised $300k from top-tier VCs and angels. Before that, I spent two enriching years at [DFKI](http://dfki.de) in Germany, developing real-time vision algorithms for precision farming—here’s a glimpse of that work: [Spot Spraying for Precision Agriculture](https://rish-av.github.io/blog/2024/spotspraying/). I graduated from [BITS Pilani](https://bits-pilani.ac.in/) in 2020 with a degree in Computer Science.
 
