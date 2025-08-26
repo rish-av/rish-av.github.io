@@ -32,5 +32,4 @@ The overarching theme of my work is to move from brittle, sample-inefficient mod
 
 ## Beyond Research
 
-Outside of research, I enjoy reading about ancient civilizations, listening to classic rock, trekking, and strength training.  
-I also write blogs reflecting on projects and life learnings.
+Outside of research, I enjoy reading about ancient civilizations, listening to classic rock, trekking, and strength training. I also write blogs reflecting on projects and life learnings.
