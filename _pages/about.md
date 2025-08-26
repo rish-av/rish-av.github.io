@@ -16,9 +16,6 @@ selected_papers: false # includes a list of papers marked as "selected={true}"
 social: true  # includes social icons at the bottom of the page
 ---
 
-
-# About Me
-
 I’m Rishav, an engineer at heart driven by the challenge of building machine learning systems that work reliably at scale.  
 I’m currently at [Mila](https://mila.quebec/en), where my research focuses on **real-time and explainable reinforcement learning**.  
 My long-term goal is to develop **trustworthy systems that can learn efficiently from feedback**, moving beyond today’s models that need millions of samples for even basic tasks.  
