@@ -17,8 +17,27 @@ social: true  # includes social icons at the bottom of the page
 ---
 
 
-I'm Rishav, an engineer at heart driven by the challenge of building machine learning systems that work reliably at scale. I’m at [Mila](https://mila.quebec/en), where my research focuses on real-time and explainable reinforcement learning. My long-term goal is to build trustworthy systems that can learn efficiently from feedback—unlike current ML models that require millions of samples for even basic tasks. 
+# About Me
 
-I previously co-founded [Offside](https://pitchbook.com/profiles/company/539173-27), where I built and scaled the product to 100k users and raised $300k from top-tier VCs and angels. Before that, I spent two enriching years at [DFKI](http://dfki.de) in Germany, developing real-time vision algorithms for precision farming—here’s a glimpse of that work: [Spot Spraying for Precision Agriculture](https://rish-av.github.io/blog/2024/spotspraying/). I graduated from [BITS Pilani](https://bits-pilani.ac.in/) in 2020 with a degree in Computer Science.
+I’m Rishav, an engineer at heart driven by the challenge of building machine learning systems that work reliably at scale.  
+I’m currently at [Mila](https://mila.quebec/en), where my research focuses on **real-time and explainable reinforcement learning**.  
+My long-term goal is to develop **trustworthy systems that can learn efficiently from feedback**, moving beyond today’s models that need millions of samples for even basic tasks.  
 
-Outside of work, I enjoy reading about ancient civilizations, listening to classic rock, trekking, and strength training. I also write blogs about my projects and life learnings.
+Before Mila, I co-founded [Offside](https://pitchbook.com/profiles/company/539173-27), where I built and scaled the product to 100k users and raised $300k from top-tier VCs and angels.  
+Earlier, I spent two enriching years at [DFKI](http://dfki.de) in Germany, developing real-time vision algorithms for precision farming—here’s a glimpse of that work: [Spot Spraying for Precision Agriculture](https://rish-av.github.io/blog/2024/spotspraying/).  
+I graduated from [BITS Pilani](https://bits-pilani.ac.in/) in 2020 with a degree in Computer Science.  
+
+## Research Interests
+
+My current research explores the intersection of **offline RL, interpretability, and real-time decision making**:  
+- **Offline RL**: designing algorithms that can reliably learn from fixed datasets without unsafe trial-and-error.  
+- **Interpretability in RL**: building methods to uncover behavior-level explanations of policies, making black-box agents more transparent and trustworthy.  
+- **Real-time RL**: addressing latency and stability challenges so agents can act seamlessly in high-frequency, safety-critical environments.  
+- **Human-inspired learning**: drawing on principles of human cognition—such as efficient credit assignment, causal reasoning, and abstraction—to design algorithms that learn faster and generalize better.  
+
+The overarching theme of my work is to move from brittle, sample-inefficient models toward **principled algorithms that are reliable, fast, and explainable** in real-world conditions.  
+
+## Beyond Research
+
+Outside of research, I enjoy reading about ancient civilizations, listening to classic rock, trekking, and strength training.  
+I also write blogs reflecting on projects and life learnings.
