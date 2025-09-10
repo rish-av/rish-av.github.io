@@ -10,7 +10,7 @@ nav_order: 1
 <!-- _pages/publications.md -->
 <div class="publications">
 
-An up-to-date list is available on <a href="https://scholar.google.com/citations?hl=en&user=DlT4loUAAAAJ">Google Scholar</a>
+An up-to-date list is available on <a href="https://scholar.google.com/citations?hl=en&user=DlT4loUAAAAJ">Google Scholar</a>. # is equal contribution. 
 
 {%- for y in page.years %}
   <h2 class="year">{{y}}</h2>
