@@ -22,13 +22,17 @@ Before Mila, I co-founded [Offside](https://pitchbook.com/profiles/company/53917
 
 ## Research Interests
 
-My current research explores the intersection of **offline RL, interpretability, and real-time decision making**:  
-- **Offline RL**: designing algorithms that can reliably learn from fixed datasets without unsafe trial-and-error.  
-- **Interpretability in RL**: building methods to uncover behavior-level explanations of policies, making black-box agents more transparent and trustworthy.  
-- **Real-time RL**: addressing latency and stability challenges so agents can act seamlessly in high-frequency, safety-critical environments.  
-- **Human-inspired learning**: drawing on principles of human cognition—such as efficient credit assignment, causal reasoning, and abstraction—to design algorithms that learn faster and generalize better.  
+My current research focuses on Offline RL problems, particularly explainability and adaptive regularization. My broader research interests are in:
 
-The overarching theme of my work is to move from brittle, sample-inefficient models toward **principled algorithms that are reliable, fast, and explainable** in real-world conditions.  
+- **Offline RL**: designing algorithms that can reliably learn from fixed datasets without unsafe trial-and-error exploration in sequential decision-making environments.
+
+- **Mechanistic interpretability**: uncovering the internal computational mechanisms underlying intelligent systems, developing frameworks to understand how credit assignment, planning, and abstract representation learning work at the circuit and feature level.
+
+- **Reasoning and human-inspired learning**: investigating complex reasoning tasks such as chain-of-thought inference, planning, and causal reasoning, while drawing on principles of human cognition to design algorithms that learn faster and generalize better.
+
+- **Real-time decision making**: addressing latency and stability challenges for deploying intelligent systems in high-frequency, safety-critical environments where interpretability is crucial for trust and reliability.
+
+The overarching theme of my work is to move from brittle, opaque models toward **principled algorithms that are mechanistically interpretable, sample-efficient, and reliable** in real-world conditions.
 
 ## Beyond Research
 
