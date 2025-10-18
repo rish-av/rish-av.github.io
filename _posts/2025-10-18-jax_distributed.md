@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Distributed Training with JAX Simplified
-date: 2025-01-18 21:00:00
+date: 2025-10-18 21:00:00
 description: Training a large model like GPT-3 with JAX.
 tags: jax distributed-training deep-learning
 categories: ai
