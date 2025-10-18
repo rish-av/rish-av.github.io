@@ -1,4 +1,3 @@
-```markdown
 ---
 layout: post
 title: Distributed Training with JAX Simplified
@@ -349,4 +348,3 @@ Understanding these principles, particularly the memory layout considerations an
 - [JAX Documentation](https://jax.readthedocs.io/)
 - [JAX Sharding Guide](https://jax.readthedocs.io/en/latest/notebooks/Distributed_arrays_and_automatic_parallelization.html)
 - [Flax Documentation](https://flax.readthedocs.io/)
-```
