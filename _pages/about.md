@@ -20,7 +20,7 @@ I'm a graduate student at [Mila](https://mila.quebec/en), broadly interested in 
 
 My larger goal is to develop safe, interpretable, real-time, and sample-efficient agents, motivating my interests in areas like mechanistic interpretability, world models, and real-time systems.
 
-Before Mila, I co-founded [Offside](https://pitchbook.com/profiles/company/539173-27) (scaled to 100k users), spent ~2 years at [DFKI](http://dfki.de) in Germany developing real-time vision algorithms for precision farming ([blog post](https://rish-av.github.io/blog/2024/spotspraying/)), and earned a BSc in Computer Science from [BITS Pilani](https://bits-pilani.ac.in/) in 2020.
+Before Mila, I co-founded [Offside](https://pitchbook.com/profiles/company/539173-27) (scaled to 100k users), spent ~2 years at [DFKI](http://dfki.de) in Germany developing real-time vision algorithms for precision farming ([blog post](https://rish-av.github.io/blog/2024/spotspraying/)), and earned a BEng (Thesis) in Computer Science from [BITS Pilani](https://bits-pilani.ac.in/) in 2020.
 
 ## Beyond Research
 
