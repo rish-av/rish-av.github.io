@@ -279,9 +279,6 @@ $$L_r^* = \sqrt{\frac{nL}{n+2}}$$
 This formula minimizes total memory by balancing two factors: If blocks are too small, you need to store many checkpoints; if blocks are too large, you need huge transient memory for the active block.
 
 For a 100-layer model with n=4:
-```
-L_r* = √(4 × 100 / 6) ≈ 8-10 layers per block
-```
 
 **Memory breakdown with $L_r = 10$:**
 ```
