@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Rishav">
+<meta name="dcterms.date" content="2025-10-18">
+<meta name="description" content="Rishav’s personal website. Graduate researcher at Mila researching reliable machine learning systems. Interests in RL, mechanistic interpretability, and real-time systems. Blog on AI, coffee, and mountains.">
+
+<title>Distributed Training with JAX Simplified – Rishav</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-3e8f12d1b5c8d04d32925f9f9ead600c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-1ZTF5BQFYQ"></script>
+
+<script type="text/javascript">
+
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-1ZTF5BQFYQ', { 'anonymize_ip': true});
+</script>
+
+<!-- 
+Load Academicons v1: https://jpswalsh.github.io/academicons/
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+
+<!---
+The following code are needed to show dimension citation and altmetrics.
+https://api.altmetric.com/embeds.html
+https://badge.dimensions.ai/
+--->
+
+<script type="text/javascript" src="https://d1bxh8uas1mnw7.cloudfront.net/assets/embed.js"></script>
+
+<script async="" src="https://badge.dimensions.ai/badge.js" charset="utf-8"></script>
+
+<script type="text/javascript" src="//cdn.plu.mx/widget-popup.js"></script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../custom-pin.css">
+<meta property="og:title" content="Distributed Training with JAX Simplified – Rishav">
+<meta property="og:description" content="Training a large model like GPT-3 with JAX.">
+<meta property="og:image" content="https://rish-av.github.io/files/images/jax.png">
+<meta property="og:site_name" content="Rishav">
+<meta property="og:image:height" content="145">
+<meta property="og:image:width" content="250">
+<meta name="twitter:title" content="Distributed Training with JAX Simplified – Rishav">
+<meta name="twitter:description" content="Training a large model like GPT-3 with JAX.">
+<meta name="twitter:image" content="https://rish-av.github.io/files/images/jax.png">
+<meta name="twitter:image-height" content="145">
+<meta name="twitter:image-width" content="250">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Rishav</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../posts.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../projects.html"> 
+<span class="menu-text">Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../publications.html"> 
+<span class="menu-text">Publications</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/rish-av" target="_blank"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://twitter.com/rishav_real" target="_blank"> <i class="bi bi-twitter" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://linkedin.com/in/rishvv" target="_blank"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Toggle reader mode">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#distributed-training-with-jax-simplified" id="toc-distributed-training-with-jax-simplified" class="nav-link active" data-scroll-target="#distributed-training-with-jax-simplified">Distributed Training with JAX Simplified</a>
+  <ul class="collapse">
+  <li><a href="#why-jax-for-distributed-training" id="toc-why-jax-for-distributed-training" class="nav-link" data-scroll-target="#why-jax-for-distributed-training">Why JAX for Distributed Training?</a></li>
+  <li><a href="#the-functional-foundation" id="toc-the-functional-foundation" class="nav-link" data-scroll-target="#the-functional-foundation">The Functional Foundation</a></li>
+  <li><a href="#understanding-device-mesh-the-core-abstraction" id="toc-understanding-device-mesh-the-core-abstraction" class="nav-link" data-scroll-target="#understanding-device-mesh-the-core-abstraction">Understanding Device Mesh: The Core Abstraction</a>
+  <ul class="collapse">
+  <li><a href="#physical-layout-vs.-logical-organization" id="toc-physical-layout-vs.-logical-organization" class="nav-link" data-scroll-target="#physical-layout-vs.-logical-organization">Physical Layout vs.&nbsp;Logical Organization</a></li>
+  </ul></li>
+  <li><a href="#partitionspec-mapping-tensors-to-mesh" id="toc-partitionspec-mapping-tensors-to-mesh" class="nav-link" data-scroll-target="#partitionspec-mapping-tensors-to-mesh">PartitionSpec: Mapping Tensors to Mesh</a>
+  <ul class="collapse">
+  <li><a href="#example-sharding-a-3d-tensor" id="toc-example-sharding-a-3d-tensor" class="nav-link" data-scroll-target="#example-sharding-a-3d-tensor">Example: Sharding a 3D Tensor</a></li>
+  </ul></li>
+  <li><a href="#memory-layout-the-hidden-complexity" id="toc-memory-layout-the-hidden-complexity" class="nav-link" data-scroll-target="#memory-layout-the-hidden-complexity">Memory Layout: The Hidden Complexity</a>
+  <ul class="collapse">
+  <li><a href="#why-reshape-then-transpose-in-attention" id="toc-why-reshape-then-transpose-in-attention" class="nav-link" data-scroll-target="#why-reshape-then-transpose-in-attention">Why Reshape Then Transpose in Attention?</a></li>
+  </ul></li>
+  <li><a href="#critical-mistake-wrong-sharding-for-weights" id="toc-critical-mistake-wrong-sharding-for-weights" class="nav-link" data-scroll-target="#critical-mistake-wrong-sharding-for-weights">Critical Mistake: Wrong Sharding for Weights</a></li>
+  <li><a href="#when-does-batch-splitting-actually-happen" id="toc-when-does-batch-splitting-actually-happen" class="nav-link" data-scroll-target="#when-does-batch-splitting-actually-happen">When Does Batch Splitting Actually Happen?</a></li>
+  <li><a href="#redundant-computation-a-subtle-pitfall" id="toc-redundant-computation-a-subtle-pitfall" class="nav-link" data-scroll-target="#redundant-computation-a-subtle-pitfall">Redundant Computation: A Subtle Pitfall</a></li>
+  <li><a href="#complete-training-loop" id="toc-complete-training-loop" class="nav-link" data-scroll-target="#complete-training-loop">Complete Training Loop</a></li>
+  <li><a href="#memory-calculation-for-gpt-3" id="toc-memory-calculation-for-gpt-3" class="nav-link" data-scroll-target="#memory-calculation-for-gpt-3">Memory Calculation for GPT-3</a></li>
+  <li><a href="#key-principles" id="toc-key-principles" class="nav-link" data-scroll-target="#key-principles">Key Principles</a></li>
+  <li><a href="#resources" id="toc-resources" class="nav-link" data-scroll-target="#resources">Resources</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Distributed Training with JAX Simplified</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">ai</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Training a large model like GPT-3 with JAX.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">October 18, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="distributed-training-with-jax-simplified" class="level1">
+<h1>Distributed Training with JAX Simplified</h1>
+<p>Training large language models like GPT-3 (175B parameters) requires distributing computation across dozens or hundreds of GPUs. JAX makes this remarkably elegant through its functional programming paradigm and sharding primitives. However, the mental model required differs significantly from PyTorch’s imperative style. This post demystifies JAX’s distributed training by addressing the key conceptual hurdles that arise when learning the framework.</p>
+<section id="why-jax-for-distributed-training" class="level2">
+<h2 class="anchored" data-anchor-id="why-jax-for-distributed-training">Why JAX for Distributed Training?</h2>
+<p>JAX excels at distributed training for three fundamental reasons:</p>
+<p><strong>1. Functional paradigm</strong>: Parameters are data structures, not hidden object state. This makes sharding trivial—just split the data structure across devices.</p>
+<p><strong>2. Explicit state management</strong>: No global random state or hidden device placement. Everything is passed explicitly.</p>
+<p><strong>3. Automatic communication</strong>: Given sharding specifications, JAX’s compiler (XLA) figures out optimal communication patterns.</p>
+<p>For comparison:</p>
+<p><strong>PyTorch (DDP):</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ~50+ lines of boilerplate</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>dist.init_process_group(backend<span class="op">=</span><span class="st">'nccl'</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>rank <span class="op">=</span> dist.get_rank()</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> DDP(model, device_ids<span class="op">=</span>[rank])</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>sampler <span class="op">=</span> DistributedSampler(dataset, rank<span class="op">=</span>rank)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ... manual device management, rank checks, cleanup</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>JAX:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="at">@jax.pmap</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_step(params, batch):</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> compute_grads(params, batch)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="the-functional-foundation" class="level2">
+<h2 class="anchored" data-anchor-id="the-functional-foundation">The Functional Foundation</h2>
+<p>JAX’s functional approach is the first conceptual hurdle. Unlike PyTorch where parameters live inside model objects, JAX separates computation from state.</p>
+<p><strong>PyTorch:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> Model()  <span class="co"># Parameters hidden inside</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>loss <span class="op">=</span> model(x)  <span class="co"># Uses internal state</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>loss.backward()  <span class="co"># Modifies internal .grad</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>JAX:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> Model()  <span class="co"># Just defines computation</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>params <span class="op">=</span> model.init(key, x)  <span class="co"># Parameters are separate data</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>logits <span class="op">=</span> model.<span class="bu">apply</span>(params, x)  <span class="co"># Explicit parameter passing</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>grads <span class="op">=</span> grad(loss_fn)(params, x)  <span class="co"># Explicit differentiation</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Why does this matter? Because parameters being “just data” means you can trivially split them:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sharded_params <span class="op">=</span> jax.device_put(params, sharding_spec)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>No DDP wrappers, no process groups, no manual device management.</p>
+</section>
+<section id="understanding-device-mesh-the-core-abstraction" class="level2">
+<h2 class="anchored" data-anchor-id="understanding-device-mesh-the-core-abstraction">Understanding Device Mesh: The Core Abstraction</h2>
+<p>The device mesh is JAX’s fundamental abstraction for organizing GPUs. Understanding this thoroughly is critical—most confusion in JAX distributed training stems from misunderstanding the mesh.</p>
+<section id="physical-layout-vs.-logical-organization" class="level3">
+<h3 class="anchored" data-anchor-id="physical-layout-vs.-logical-organization">Physical Layout vs.&nbsp;Logical Organization</h3>
+<p>A device mesh is a multi-dimensional array of devices with <strong>named axes</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Physical: 8x8 grid = 64 GPUs</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>devices <span class="op">=</span> mesh_utils.create_device_mesh((<span class="dv">8</span>, <span class="dv">8</span>))</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Logical: Give axes semantic names</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>mesh <span class="op">=</span> Mesh(devices, axis_names<span class="op">=</span>(<span class="st">'data'</span>, <span class="st">'model'</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Key insight: <strong>axis names define how work is distributed</strong>, not the physical layout.</p>
+<pre><code>        model axis (8 devices) →
+data  ┌────┬────┬────┬────┬────┬────┬────┬────┐
+axis  │ 0  │ 1  │ 2  │ 3  │ 4  │ 5  │ 6  │ 7  │
+(8)   ├────┼────┼────┼────┼────┼────┼────┼────┤
+↓     │ 8  │ 9  │ 10 │ 11 │ 12 │ 13 │ 14 │ 15 │
+      ├────┼────┼────┼────┼────┼────┼────┼────┤
+      │ ... (64 GPUs total)                    │
+      └────┴────┴────┴────┴────┴────┴────┴────┘</code></pre>
+<p>Semantics: - <strong>Same row</strong>: Process different batch slices with same model piece - <strong>Same column</strong>: Process same batch slice with different model pieces</p>
+<p>This enables hybrid parallelism: 8-way data parallelism × 8-way model parallelism = 64-way total parallelism.</p>
+</section>
+</section>
+<section id="partitionspec-mapping-tensors-to-mesh" class="level2">
+<h2 class="anchored" data-anchor-id="partitionspec-mapping-tensors-to-mesh">PartitionSpec: Mapping Tensors to Mesh</h2>
+<p><code>PartitionSpec</code> specifies tensor distribution across the mesh. The critical insight: <strong>PartitionSpec dimensions match tensor dimensions, not mesh dimensions</strong>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>Tensor shape:      (batch<span class="op">=</span><span class="dv">64</span>, seq<span class="op">=</span><span class="dv">2048</span>, embed<span class="op">=</span><span class="dv">12288</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>PartitionSpec:     (<span class="st">'data'</span>,    <span class="va">None</span>,    <span class="st">'model'</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                     ↑          ↑         ↑</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>                     │          │         └─ Tensor dim <span class="dv">2</span>: use <span class="st">'model'</span> axis</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>                     │          └─────────── Tensor dim <span class="dv">1</span>: replicate</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>                     └────────────────────── Tensor dim <span class="dv">0</span>: use <span class="st">'data'</span> axis</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The mesh has 2 axes, but the tensor has 3 dimensions. <strong>PartitionSpec provides 3 entries, each referencing a mesh axis name or None.</strong></p>
+<section id="example-sharding-a-3d-tensor" class="level3">
+<h3 class="anchored" data-anchor-id="example-sharding-a-3d-tensor">Example: Sharding a 3D Tensor</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>input_batch <span class="op">=</span> jnp.ones((<span class="dv">64</span>, <span class="dv">2048</span>, <span class="dv">12288</span>))</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>spec <span class="op">=</span> PartitionSpec(<span class="st">'data'</span>, <span class="va">None</span>, <span class="st">'model'</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># What happens:</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co"># - Dim 0 (batch=64): Split 8 ways along 'data' axis → 8 per device</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co"># - Dim 1 (seq=2048): Replicate (all devices get full sequence)</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co"># - Dim 2 (embed=12288): Split 8 ways along 'model' axis → 1536 per device</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Result per GPU: (8, 2048, 1536)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="memory-layout-the-hidden-complexity" class="level2">
+<h2 class="anchored" data-anchor-id="memory-layout-the-hidden-complexity">Memory Layout: The Hidden Complexity</h2>
+<p>Understanding memory layout is crucial for two reasons: correctness and performance. This is where reshape vs.&nbsp;transpose becomes important.</p>
+<section id="why-reshape-then-transpose-in-attention" class="level3">
+<h3 class="anchored" data-anchor-id="why-reshape-then-transpose-in-attention">Why Reshape Then Transpose in Attention?</h3>
+<p>In multi-head attention, we perform:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> nn.Dense(num_heads <span class="op">*</span> head_dim)(x)  <span class="co"># Shape: (batch, seq, 512)</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> q.reshape(batch, seq, num_heads, head_dim)    <span class="co"># Step 1</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> jnp.transpose(q, (<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">3</span>))                <span class="co"># Step 2</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Why not directly reshape to <code>(batch, num_heads, seq, head_dim)</code>?</p>
+<p><strong>Answer: Memory layout</strong>. After the Dense layer, the 512 dimensions are laid out in memory as:</p>
+<pre><code>[head0_dim0, head0_dim1, ..., head0_dim63,    # First 64: head 0
+ head1_dim0, head1_dim1, ..., head1_dim63,    # Next 64: head 1
+ ...
+ head7_dim0, head7_dim1, ..., head7_dim63]    # Last 64: head 7</code></pre>
+<p><strong>Reshape</strong> changes how we interpret the data without moving it. Reshaping to <code>(batch, seq, 8, 64)</code> naturally groups the 512 dimensions into 8 groups of 64, which matches the memory layout.</p>
+<p><strong>Transpose</strong> actually reorders data in memory. We need it to put <code>num_heads</code> before <code>seq_len</code> for efficient attention computation.</p>
+<p>Attempting to directly reshape to <code>(batch, num_heads, seq, head_dim)</code> would create a view where the data interpretation doesn’t match the underlying memory layout, resulting in incorrect groupings.</p>
+<p><strong>Key principle</strong>: Reshape operations must respect the underlying memory layout. You can only reshape in ways that maintain the contiguity of data in memory.</p>
+</section>
+</section>
+<section id="critical-mistake-wrong-sharding-for-weights" class="level2">
+<h2 class="anchored" data-anchor-id="critical-mistake-wrong-sharding-for-weights">Critical Mistake: Wrong Sharding for Weights</h2>
+<p>The most common error is applying data parallelism to model weights:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># WRONG</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>weight <span class="op">=</span> jnp.ones((<span class="dv">12288</span>, <span class="dv">49152</span>))</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>spec <span class="op">=</span> PartitionSpec(<span class="st">'data'</span>, <span class="va">None</span>)  <span class="co"># Split first dim on data axis</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Let’s trace what happens in memory:</p>
+<pre><code>Weight split along 'data' axis (8 ways):
+
+Data position 0 (GPUs 0-7):   Rows 0-1535
+Data position 1 (GPUs 8-15):  Rows 1536-3071
+Data position 2 (GPUs 16-23): Rows 3072-4607
+...
+
+During training:
+- Batch slice 0 → Data position 0 → Uses weight rows 0-1535
+- Batch slice 1 → Data position 1 → Uses weight rows 1536-3071
+
+Each data replica has DIFFERENT weights = different models!
+Training is broken.</code></pre>
+<p><strong>Correct approach</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>spec <span class="op">=</span> PartitionSpec(<span class="va">None</span>, <span class="st">'model'</span>)  <span class="co"># Replicate rows, split columns</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># All data replicas get all 12288 rows (same model)</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Columns split 8 ways: each device gets 6144 columns</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="when-does-batch-splitting-actually-happen" class="level2">
+<h2 class="anchored" data-anchor-id="when-does-batch-splitting-actually-happen">When Does Batch Splitting Actually Happen?</h2>
+<p>This reveals a critical insight: <strong>sharding happens at device_put time, not during computation</strong>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Original batch in CPU/main memory</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>batch <span class="op">=</span> jnp.ones((<span class="dv">64</span>, <span class="dv">2048</span>, <span class="dv">12288</span>))</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply sharding - data is NOW physically distributed</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>input_spec <span class="op">=</span> PartitionSpec(<span class="st">'data'</span>, <span class="va">None</span>, <span class="va">None</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>sharded_batch <span class="op">=</span> jax.device_put(batch, NamedSharding(mesh, input_spec))</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co"># At this moment, batch is split across devices:</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Data position 0 → batch[0:8] on GPUs 0-7</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Data position 1 → batch[8:16] on GPUs 8-15</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The split happens before the forward pass. Each GPU already has its slice when computation begins. This is fundamentally different from PyTorch’s DistributedSampler which creates different batches per process.</p>
+</section>
+<section id="redundant-computation-a-subtle-pitfall" class="level2">
+<h2 class="anchored" data-anchor-id="redundant-computation-a-subtle-pitfall">Redundant Computation: A Subtle Pitfall</h2>
+<p>Consider this seemingly reasonable sharding:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>input_spec <span class="op">=</span> PartitionSpec(<span class="st">'model'</span>, <span class="va">None</span>, <span class="va">None</span>)   <span class="co"># Batch on model axis</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>weight_spec <span class="op">=</span> PartitionSpec(<span class="va">None</span>, <span class="st">'model'</span>)        <span class="co"># Weights on model axis</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is mathematically correct but computationally wasteful:</p>
+<pre><code>GPU 0:  Batch 0-7  × Weight cols 0-6143    → Result₀
+GPU 8:  Batch 0-7  × Weight cols 0-6143    → Result₀ (IDENTICAL!)
+GPU 16: Batch 0-7  × Weight cols 0-6143    → Result₀ (IDENTICAL!)
+...</code></pre>
+<p><strong>Why?</strong> Both batch and weights are split along the model axis. GPUs in the same column (same model axis position) receive: - Same batch slice (model position 0 → batch 0-7) - Same weight slice (model position 0 → cols 0-6143) - Therefore: Identical computation</p>
+<p>All GPUs in each column duplicate work. Only 12.5% of compute power is utilized (8 unique computations across 64 GPUs).</p>
+<p><strong>Solution</strong>: Orthogonal splits:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>input_spec <span class="op">=</span> PartitionSpec(<span class="st">'data'</span>, <span class="va">None</span>, <span class="va">None</span>)    <span class="co"># Different batches per row</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>weight_spec <span class="op">=</span> PartitionSpec(<span class="va">None</span>, <span class="st">'model'</span>)        <span class="co"># Different weights per column</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Now every GPU does unique work: 8 data replicas × 8 model pieces = true 64-way parallelism.</p>
+</section>
+<section id="complete-training-loop" class="level2">
+<h2 class="anchored" data-anchor-id="complete-training-loop">Complete Training Loop</h2>
+<p>Putting it together:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Setup mesh</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>devices <span class="op">=</span> mesh_utils.create_device_mesh((<span class="dv">8</span>, <span class="dv">8</span>))</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>mesh <span class="op">=</span> Mesh(devices, axis_names<span class="op">=</span>(<span class="st">'data'</span>, <span class="st">'model'</span>))</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Initialize and shard parameters</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>params <span class="op">=</span> model.init(key, dummy_input)</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> shard_param(path, param):</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    name <span class="op">=</span> <span class="st">'/'</span>.join(path)</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Large embeddings: split vocab</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="st">'embedding'</span> <span class="kw">in</span> name <span class="kw">and</span> param.shape[<span class="dv">0</span>] <span class="op">&gt;</span> <span class="dv">10000</span>:</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> jax.device_put(param, NamedSharding(mesh, PartitionSpec(<span class="st">'model'</span>, <span class="va">None</span>)))</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Large matrices: split hidden dimension</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="st">'kernel'</span> <span class="kw">in</span> name <span class="kw">and</span> param.shape[<span class="dv">1</span>] <span class="op">&gt;</span> <span class="dv">1000</span>:</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> jax.device_put(param, NamedSharding(mesh, PartitionSpec(<span class="va">None</span>, <span class="st">'model'</span>)))</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Small params: replicate</span></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> jax.device_put(param, NamedSharding(mesh, PartitionSpec()))</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>sharded_params <span class="op">=</span> jax.tree_util.tree_map_with_path(shard_param, params)</span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Training step</span></span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a><span class="at">@jax.jit</span></span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_step(params, batch, opt_state):</span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> loss_fn(params):</span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>        logits <span class="op">=</span> model.<span class="bu">apply</span>(params, batch[<span class="st">'input_ids'</span>])</span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> cross_entropy(logits, batch[<span class="st">'labels'</span>])</span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>    loss, grads <span class="op">=</span> jax.value_and_grad(loss_fn)(params)</span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>    updates, opt_state <span class="op">=</span> optimizer.update(grads, opt_state)</span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a>    params <span class="op">=</span> optax.apply_updates(params, updates)</span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> params, opt_state, loss</span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Main loop</span></span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> batch <span class="kw">in</span> dataloader:</span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Shard input</span></span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a>    batch <span class="op">=</span> jax.device_put(batch, NamedSharding(mesh, PartitionSpec(<span class="st">'data'</span>, <span class="va">None</span>)))</span>
+<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Train (all communication automatic)</span></span>
+<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>    sharded_params, opt_state, loss <span class="op">=</span> train_step(sharded_params, batch, opt_state)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="memory-calculation-for-gpt-3" class="level2">
+<h2 class="anchored" data-anchor-id="memory-calculation-for-gpt-3">Memory Calculation for GPT-3</h2>
+<p>With 8-way model parallelism on 64 A100 GPUs:</p>
+<pre><code>Total parameters: 175B
+Per device: 175B / 8 = 22B params
+
+Memory per GPU (FP16):
+- Parameters:        22B × 2 bytes = 44 GB → 11 GB (with optimizations)
+- Gradients:         Same as parameters = 11 GB
+- Optimizer (Adam):  2× parameters = 22 GB
+- Activations:       ~20 GB
+─────────────────────────────────────────
+Total: ~64 GB ✓ Fits on 80GB A100</code></pre>
+<p>Without sharding: 175B × 4 bytes = 700 GB for parameters alone. Impossible on single GPU.</p>
+</section>
+<section id="key-principles" class="level2">
+<h2 class="anchored" data-anchor-id="key-principles">Key Principles</h2>
+<ol type="1">
+<li><p><strong>JAX’s functional paradigm</strong> makes parameters explicit data structures that can be trivially split across devices.</p></li>
+<li><p><strong>Device mesh with named axes</strong> provides semantic organization. The ‘data’ axis represents different data batches, the ‘model’ axis represents different model pieces.</p></li>
+<li><p><strong>PartitionSpec dimensions match tensor dimensions</strong>, not mesh dimensions. Each entry references a named mesh axis or None.</p></li>
+<li><p><strong>Memory layout matters</strong>: Reshape operations must respect contiguous memory layout. This is why attention requires both reshape and transpose.</p></li>
+<li><p><strong>Weights use model parallelism</strong> (split along model axis), <strong>inputs use data parallelism</strong> (split along data axis). Mixing these causes either incorrect training (different models per replica) or redundant computation (wasted GPUs).</p></li>
+<li><p><strong>Sharding happens at device_put time</strong>, not during computation. Once sharded, JAX/XLA handles all communication automatically.</p></li>
+<li><p><strong>Efficiency requires orthogonal splits</strong>: batch along data axis, model along model axis. This achieves true N×M parallelism on an N×M mesh.</p></li>
+</ol>
+<p>Understanding these principles, particularly the memory layout considerations and the distinction between physical device arrangement and logical axis semantics, demystifies JAX’s sharding and reveals why it’s particularly elegant for large-scale training.</p>
+</section>
+<section id="resources" class="level2">
+<h2 class="anchored" data-anchor-id="resources">Resources</h2>
+<ul>
+<li><a href="https://jax.readthedocs.io/">JAX Documentation</a></li>
+<li><a href="https://jax.readthedocs.io/en/latest/notebooks/Distributed_arrays_and_automatic_parallelization.html">JAX Sharding Guide</a></li>
+<li><a href="https://flax.readthedocs.io/">Flax Documentation</a></li>
+</ul>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("^(?:http:|https:)\/\/drganghe\.github\.io\/custom");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<a href="https://rish-av.github.io">Rishav</a> ©
+<script>document.write(new Date().getFullYear())</script>
+</div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

@@ -1,0 +1,2462 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss  xmlns:atom="http://www.w3.org/2005/Atom" 
+      xmlns:media="http://search.yahoo.com/mrss/" 
+      xmlns:content="http://purl.org/rss/1.0/modules/content/" 
+      xmlns:dc="http://purl.org/dc/elements/1.1/" 
+      version="2.0">
+<channel>
+<title>Rishav</title>
+<link>https://rish-av.github.io/posts.html</link>
+<atom:link href="https://rish-av.github.io/posts.xml" rel="self" type="application/rss+xml"/>
+<description>Graduate researcher at Mila building reliable machine learning systems.</description>
+<image>
+<url>https://rish-av.github.io/files/images/rishav1.png</url>
+<title>Rishav</title>
+<link>https://rish-av.github.io/posts.html</link>
+</image>
+<generator>quarto-1.8.26</generator>
+<lastBuildDate>Sat, 03 Jan 2026 07:00:00 GMT</lastBuildDate>
+<item>
+  <title>The Identity Crisis: How DeepSeek Fixed the Flaw in Hyper-Connections</title>
+  <link>https://rish-av.github.io/posts/2026-01-03-mHC/</link>
+  <description><![CDATA[ 
+
+
+
+
+<section id="part-1-the-golden-rule-of-deep-learning" class="level2">
+<h2 class="anchored" data-anchor-id="part-1-the-golden-rule-of-deep-learning">Part 1: The Golden Rule of Deep Learning</h2>
+<p>In the world of Deep Learning, we have a “Golden Rule” that has allowed models to evolve from the image classifiers of 2015 to the reasoning giants of today: the <strong>Identity Mapping</strong>. For a very long time, this was seen a standard which did not need any further engineering but DeepSeek’s team begs to differ here.</p>
+<p>Think of a standard Residual Network (ResNet) as a single-lane highway. The “Identity Mapping” is the rule that allows traffic (information) to flow straight through from start to finish without stopping. Mathematically, we express this as:</p>
+<p><img src="https://latex.codecogs.com/png.latex?x_%7Bl+1%7D%20=%20x_l%20+%20F(x_l,%20W_l)"></p>
+<p><img src="https://rish-av.github.io/files/images/combined.png" class="img-fluid" style="width:100.0%" alt="Architecture Variants"> <em>Figure 1(a-c) from the paper - shows residual connection, HC architecture, and mHC architecture</em></p>
+<section id="why-is-this-critical" class="level3">
+<h3 class="anchored" data-anchor-id="why-is-this-critical">Why is this critical?</h3>
+<p>This simple addition was a key enabler in scaling deep networks. The identity mapping allows gradients to flow cleanly through hundreds of layers, which became essential as architectures grew from models like <strong>ResNet-50</strong> (~25 million parameters) to modern LLMs with hundreds of billions of parameters.</p>
+<p><strong>The Physics:</strong> During training, when the model looks backward to learn (backpropagation), the gradient flows through the identity path (the <code>x_l</code> term) without any modification, ensuring the signal doesn’t vanish or explode, even after traveling through hundreds of layers.</p>
+<p><strong>Concrete Example:</strong> Imagine you’re training a 100-layer network. During backpropagation, gradients need to flow from layer 100 back to layer 1. Without the identity mapping, each layer might multiply the gradient by some value like 0.9. After 100 layers: 0.9^100 ≈ 0.0000266. Your gradient has essentially <strong>vanished</strong> - the early layers can’t learn anything. With the identity mapping, there’s always a direct gradient path back to early layers, preserving the signal.</p>
+<hr>
+</section>
+</section>
+<section id="part-2-the-innovation---hyper-connections-hc" class="level2">
+<h2 class="anchored" data-anchor-id="part-2-the-innovation---hyper-connections-hc">Part 2: The Innovation - Hyper-Connections (HC)</h2>
+<p>Recent research introduced “Hyper-Connections” (HC) to upgrade this highway. HC widens the road by an expansion rate of <code>n</code> (typically <code>n=4</code>).</p>
+<section id="understanding-the-dimensions" class="level3">
+<h3 class="anchored" data-anchor-id="understanding-the-dimensions">Understanding the Dimensions</h3>
+<p>It’s important to visualize this correctly. We aren’t just making the single vector 4 times longer. Instead, we are building <strong>4 parallel streams</strong> (lanes) that run side-by-side.</p>
+<p><strong>Standard:</strong> 1 Stream of size <code>d</code> (e.g., 4096)</p>
+<p><strong>HC (n=4):</strong> 4 Streams, each of size <code>d</code></p>
+<p><img src="https://latex.codecogs.com/png.latex?M%5E%7B(t)%7D%20=%20T_r(T_c(M%5E%7B(t-1)%7D))"></p>
+<p><strong>Intuition:</strong> Think of it like having 4 different “perspectives” on the same information. One stream might specialize in syntax, another in semantics, a third in world knowledge, and the fourth in reasoning patterns. By having these parallel streams, the model can maintain multiple specialized representations simultaneously. (See Figure 1(b) above)</p>
+<p>HC builds complex interchanges to mix the traffic between these lanes:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cprod_%7Bi=1%7D%5E%7B100%7D%20H%5E%7Bres%7D_%7B100-i%7D%20%5Ctext%7B%20is%20ALSO%20doubly%20stochastic%7D"></p>
+<p>Where:</p>
+<ul>
+<li><strong>reads</strong>: <img src="https://latex.codecogs.com/png.latex?H%5E%7Bpre%7D_l%20%5Cin%20%5Cmathbb%7BR%7D%5E%7B1%20%5Ctimes%20n%7D"> reads from the streams into the layer (aggregates 4 streams → 1 input)</li>
+<li><strong>writes</strong>: <img src="https://latex.codecogs.com/png.latex?H%5E%7Bpost%7D_l%20%5Cin%20%5Cmathbb%7BR%7D%5E%7B1%20%5Ctimes%20n%7D"> writes the layer output back to the streams (distributes 1 output → 4 streams)</li>
+<li><strong>mixes</strong>: <img src="https://latex.codecogs.com/png.latex?H%5E%7Bres%7D_l%20%5Cin%20%5Cmathbb%7BR%7D%5E%7Bn%20%5Ctimes%20n%7D"> mixes information between the parallel streams (4 streams → 4 streams)</li>
+</ul>
+<p><strong>Concrete Example of Mixing:</strong> Suppose stream 1 contains grammatical information and stream 2 contains semantic information. The mixing matrix <img src="https://latex.codecogs.com/png.latex?H%5E%7Bres%7D_l"> might have learned that for certain tasks, you need 70% grammar + 30% semantics in the first output stream, and 20% grammar + 80% semantics in the second output stream. This is what “mixing” means - creating weighted combinations of the specialized streams.</p>
+<p>This diversification drastically increases the model’s capacity to learn and reason by allowing different “lanes” to specialize in different features.</p>
+<hr>
+</section>
+</section>
+<section id="part-3-the-problem---the-crash" class="level2">
+<h2 class="anchored" data-anchor-id="part-3-the-problem---the-crash">Part 3: The Problem - The Crash</h2>
+<p>But there was a catch. HC removed the traffic rules. Without the safety of the Identity Mapping, the mixing matrices could arbitrarily multiply the signal strength.</p>
+<section id="visualizing-the-failure" class="level3">
+<h3 class="anchored" data-anchor-id="visualizing-the-failure">Visualizing the Failure</h3>
+<p>Imagine a graph where the X-axis is the <strong>Layer Number</strong> (Depth) and the Y-axis is the <strong>Signal Variance</strong> (Energy).</p>
+<p><strong>Stable ResNet:</strong> The line is flat. The energy stays constant at 1.0 from Layer 1 to Layer 100, effectively following the “speed limit.”</p>
+<p><strong>Unstable HC:</strong> The line looks like an exponential <strong>“rocket launch.”</strong> It starts small, but the compound effect causes it to explode.</p>
+<p><strong>The Math Behind the Explosion:</strong> In standard ResNet, after 100 layers you have:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5C%7CH%5E%7Bres%7D_l%20x%5C%7C_2%20%5Cleq%20%5C%7Cx%5C%7C_2"></p>
+<p>The <code>x_0</code> term is unchanged - it’s literally the same vector that entered layer 0.</p>
+<p>In HC, after 100 layers you have:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cmathcal%7BM%7D_%7Bres%7D%20=%20%5C%7BH%5E%7Bres%7D_l%20%5Cin%20%5Cmathbb%7BR%7D%5E%7Bn%20%5Ctimes%20n%7D%20%5Cmid%20H%5E%7Bres%7D_l%20%5Cmathbf%7B1%7D_n%20=%20%5Cmathbf%7B1%7D_n,%20%5Cmathbf%7B1%7D_n%5ET%20H%5E%7Bres%7D_l%20=%20%5Cmathbf%7B1%7D_n%5ET,%20H%5E%7Bres%7D_l%20%5Cgeq%200%5C%7D"></p>
+<p>That product of 100 matrices is the problem. Even if each <code>H^{res}_l</code> has a maximum eigenvalue of just 1.02 (only 2% above unity), after 100 layers: 1.02^100 ≈ 7.24. <strong>Your signal has amplified by 7×!</strong> And with uncontrolled matrices, you might see eigenvalues of 1.1 or higher, leading to: 1.1^100 ≈ 13,780 - complete explosion.</p>
+<p><img src="https://rish-av.github.io/files/images/figure3.png" class="img-fluid" style="width:100.0%" alt="HC Instability"> <em>Figure 3 from the paper - shows the dramatic explosion in gradient magnitude for HC reaching nearly 10^4</em></p>
+<p><img src="https://rish-av.github.io/files/images/figure2.png" class="img-fluid" style="width:100.0%" alt="Training Loss Instability"> <em>Figure 2 from the paper - shows the training instability and loss spikes in HC</em></p>
+<p><strong>Why This Breaks Training:</strong> When gradients explode to magnitudes of 10^4, the optimizer (Adam, SGD, etc.) receives nonsensical update signals. It’s like trying to park a car when the speedometer randomly jumps between 5 mph and 5,000 mph - you have no reliable information to make good decisions.</p>
+<hr>
+</section>
+</section>
+<section id="part-4-the-rules-of-the-road-the-math" class="level2">
+<h2 class="anchored" data-anchor-id="part-4-the-rules-of-the-road-the-math">Part 4: The Rules of the Road (The Math)</h2>
+<p>To fix the instability caused by Hyper-Connections, the authors had to impose strict “traffic rules” on the mixing matrices. They restrict <img src="https://latex.codecogs.com/png.latex?H%5E%7Bres%7D_l"> to the <strong>Birkhoff Polytope</strong> (<img src="https://latex.codecogs.com/png.latex?%5Cmathcal%7BM%7D_%7Bres%7D">), the geometric set of all <strong>Doubly Stochastic</strong> matrices:</p>
+<p><img src="https://latex.codecogs.com/png.latex?x_100%20=%20%5Cleft(%5Cprod_%7Bi=1%7D%5E%7B100%7D%20H%5E%7Bres%7D_%7B100-i%7D%5Cright)%20x_0%20+%20..."></p>
+<p>Where <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7B1%7D_n"> is a column vector of ones. While this looks abstract, it translates to two simple physical rules:</p>
+<section id="rule-1-row-stochasticity" class="level3">
+<h3 class="anchored" data-anchor-id="rule-1-row-stochasticity">Rule 1: Row Stochasticity</h3>
+<p><img src="https://latex.codecogs.com/png.latex?H%5E%7Bres%7D_l%20%5Cmathbf%7B1%7D_n%20=%20%5Cmathbf%7B1%7D_n"></p>
+<p><strong>The sum of weights for each outgoing stream is exactly 1.</strong></p>
+<p><strong>What this means:</strong> Imagine you have 100 “units of energy” in stream 1. Row stochasticity says: “You can redistribute this energy to streams 1, 2, 3, 4 in any proportion you want (e.g., 25% to each, or 70% to stream 1 and 10% to each of the others), BUT the total output must still be 100 units.” You cannot create energy out of nowhere.</p>
+<p><strong>Example:</strong></p>
+<pre><code>Stream 1 (100 units) → [0.7×100 → Stream 1, 0.1×100 → Stream 2, 
+                         0.1×100 → Stream 3, 0.1×100 → Stream 4]
+Total output = 70 + 10 + 10 + 10 = 100 units</code></pre>
+<p>This prevents the “Rocket Launch” effect by ensuring the total signal energy cannot be amplified.</p>
+</section>
+<section id="rule-2-column-stochasticity" class="level3">
+<h3 class="anchored" data-anchor-id="rule-2-column-stochasticity">Rule 2: Column Stochasticity</h3>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7B1%7D_n%5ET%20H%5E%7Bres%7D_l%20=%20%5Cmathbf%7B1%7D_n%5ET"></p>
+<p><strong>The sum of weights for each incoming stream is exactly 1.</strong></p>
+<p><strong>What this means:</strong> For any output stream, the contributions from all input streams must sum to exactly 1. This ensures every input feature is fully utilized and not “lost.”</p>
+<p><strong>Example:</strong></p>
+<pre><code>Output Stream 1 receives:
+  0.4 from Input Stream 1
+  0.3 from Input Stream 2
+  0.2 from Input Stream 3
+  0.1 from Input Stream 4
+Total = 0.4 + 0.3 + 0.2 + 0.1 = 1.0</code></pre>
+<p>This prevents vanishing gradients by ensuring no stream is “forgotten” or “zeroed out.”</p>
+</section>
+<section id="the-mathematical-guarantee-conservation-properties" class="level3">
+<h3 class="anchored" data-anchor-id="the-mathematical-guarantee-conservation-properties">The Mathematical Guarantee: Conservation Properties</h3>
+<p>When a matrix is doubly stochastic, it provides powerful conservation guarantees. The result is a <strong>convex combination</strong> - a weighted average where the weights sum to 1.</p>
+<p><strong>Why this matters:</strong></p>
+<p><img src="https://latex.codecogs.com/png.latex?%5C%7CH%5E%7Bres%7D_l%20x%5C%7C_1%20=%20%5C%7Cx%5C%7C_1"></p>
+<p>Doubly stochastic matrices <strong>exactly preserve</strong> the 1-norm (sum of absolute values) of any vector. This is stronger than just bounding the norm - it’s perfect conservation. Additionally, they bound the 2-norm: <img src="https://latex.codecogs.com/png.latex?%5C%7CH%5E%7Bres%7D_l%20x%5C%7C_2%20%5Cleq%20%5C%7Cx%5C%7C_2">. This dual property ensures that the signal energy is conserved during propagation, preventing both explosions and vanishing.</p>
+<p><strong>Furthermore - the crucial closure property:</strong> If you multiply two doubly stochastic matrices together, you get another doubly stochastic matrix! This means:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cprod_%7Bi=1%7D%5E%7B100%7D%20H%5E%7Bres%7D_%7B100-i%7D%20%5Ctext%7B%20is%20ALSO%20doubly%20stochastic%7D"></p>
+<p>So even after 100 layers, the composite mapping still respects the “speed limit” of 1.0.</p>
+<p><strong>Why doubly stochastic instead of spectral normalization?</strong> While spectral normalization (constraining maximum singular value to 1) also prevents explosions, doubly stochastic matrices offer a key advantage: they allow <strong>flexible mixing</strong> between streams while preserving total energy. Spectral normalization only preserves norm without enabling the rich cross-stream information exchange that makes multi-stream architectures powerful. The doubly stochastic constraint provides stability AND expressivity.</p>
+</section>
+<section id="the-enforcer-sinkhorn-knopp" class="level3">
+<h3 class="anchored" data-anchor-id="the-enforcer-sinkhorn-knopp">The Enforcer: Sinkhorn-Knopp</h3>
+<p>We cannot train these constrained parameters directly using standard gradient descent. Instead, we train a “messy,” unconstrained parameter matrix <img src="https://latex.codecogs.com/png.latex?%5Ctilde%7BH%7D%5E%7Bres%7D_l"> and force it to follow the rules during the forward pass using the <strong>Sinkhorn-Knopp algorithm</strong>.</p>
+<p>This algorithm acts like a strict accountant. It alternates between normalizing rows and columns:</p>
+<p><img src="https://latex.codecogs.com/png.latex?M%5E%7B(t)%7D%20=%20T_r(T_c(M%5E%7B(t-1)%7D))"></p>
+<p>Where <img src="https://latex.codecogs.com/png.latex?T_r"> normalizes rows (divide each row by its sum) and <img src="https://latex.codecogs.com/png.latex?T_c"> normalizes columns (divide each column by its sum).</p>
+<p><strong>Step-by-step example:</strong></p>
+<p>Starting matrix (after exp to make it positive):</p>
+<pre><code>[1.0  3.0]
+[2.0 10.0]</code></pre>
+<p>Row sums: [4, 12], Column sums: [3, 13]</p>
+<p><strong>Iteration 1 - Normalize rows:</strong></p>
+<pre><code>[0.25  0.75]  (row 1 / 4)
+[0.17  0.83]  (row 2 / 12)</code></pre>
+<p>Column sums: [0.42, 1.58]</p>
+<p><strong>Iteration 1 - Normalize columns:</strong></p>
+<pre><code>[0.60  0.47]  (col 1 / 0.42, col 2 / 1.58)
+[0.40  0.53]</code></pre>
+<p>Row sums: [1.07, 0.93]</p>
+<p>After ~20 iterations, both constraints are satisfied to high precision! The Birkhoff polytope is a <strong>convex set</strong>, and Sinkhorn-Knopp is performing an <strong>alternating projection</strong> between two linear constraints, guaranteed to converge.</p>
+<p><strong>What Do These Matrices Actually Look Like?</strong> <img src="https://rish-av.github.io/files/images/figure8.png" class="img-fluid" style="width:100.0%" alt="Learned Mapping Visualizations"> <em>Figure 8 from the paper - Visualizations of learned mappings. Top row shows unstable HC matrices with extreme values. Bottom row shows mHC’s doubly stochastic matrices with controlled, balanced weights.</em></p>
+<p>This figure reveals the difference in practice:</p>
+<p><strong>HC (top row):</strong> The unconstrained matrices show extreme values (ranging from -259 to +509 in composite mappings). When you see a row sum of 18.73 or -15.29, that’s the “rocket launch” happening - signals being amplified or attenuated wildly. Notice how the forward signal gain and backward gradient gain (labeled on axes) deviate massively from 1.0.</p>
+<p><strong>mHC (bottom row):</strong> Every matrix is beautifully balanced. Individual entries vary (showing the network learned something!), but crucially: row sums ≈ 1.0, column sums ≈ 1.0. Even in the composite mapping <code>∏ P_Mres(H^res)</code> after 60 layers, the gains stay near 1.0. The Sinkhorn constraint is working exactly as designed.</p>
+</section>
+</section>
+<section id="this-is-the-before-and-after-of-manifold-constraints---transforming-chaos-into-controlled-stable-mixing." class="level2">
+<h2 class="anchored" data-anchor-id="this-is-the-before-and-after-of-manifold-constraints---transforming-chaos-into-controlled-stable-mixing.">This is the “before and after” of manifold constraints - transforming chaos into controlled, stable mixing.</h2>
+</section>
+<section id="part-5-cheating-the-memory-wall" class="level2">
+<h2 class="anchored" data-anchor-id="part-5-cheating-the-memory-wall">Part 5: Cheating the Memory Wall</h2>
+<p>The mathematical elegance of the Birkhoff Polytope comes with a heavy price tag. By setting the expansion rate to <code>n=4</code>, the authors effectively widened the highway by four times, creating a massive data pile-up.</p>
+<section id="quantifying-the-cost" class="level3">
+<h3 class="anchored" data-anchor-id="quantifying-the-cost">Quantifying the Cost</h3>
+<p>Consider training a standard 100-layer Large Language Model with hidden dimension <code>d = 4096</code>, batch size = 1 million tokens, and FP16 precision (2 bytes per number).</p>
+<p><strong>Standard Model (n=1):</strong></p>
+<pre><code>Memory = 100 layers × 1M tokens × 4096 dim × 2 bytes
+       = 819.2 GB ≈ 800 GB</code></pre>
+<p><strong>Hyper-Connected Model (n=4):</strong></p>
+<pre><code>Memory = 100 layers × 1M tokens × (4 × 4096) dim × 2 bytes
+       = 3,276.8 GB ≈ 3.2 TB</code></pre>
+<p>This <strong>3.2 Terabytes</strong> is the <strong>Memory Wall</strong>. For reference, an NVIDIA H100 GPU has 80 GB of HBM memory. You’d need <strong>41 H100 GPUs</strong> just to hold the activations!</p>
+</section>
+<section id="why-is-mhc-memory-heavy-but-compute-light" class="level3">
+<h3 class="anchored" data-anchor-id="why-is-mhc-memory-heavy-but-compute-light">Why is mHC Memory-Heavy but Compute-Light?</h3>
+<p>Let’s break down the operations to understand this crucial trade-off.</p>
+<p><strong>Computational Complexity (FLOPs):</strong> For a mixing operation <img src="https://latex.codecogs.com/png.latex?H%5E%7Bres%7D_l%20x_l"> where <img src="https://latex.codecogs.com/png.latex?H%5E%7Bres%7D_l%20%5Cin%20%5Cmathbb%7BR%7D%5E%7B4%20%5Ctimes%204%7D"> and <img src="https://latex.codecogs.com/png.latex?x_l%20%5Cin%20%5Cmathbb%7BR%7D%5E%7B4%20%5Ctimes%204096%7D">:</p>
+<pre><code>FLOPs = 2 × 4 × 4 × 4096 ≈ 131K operations per token</code></pre>
+<p><strong>Compare this to the FFN layer:</strong></p>
+<pre><code>FLOPs = 2 × 4096 × (4 × 4096) ≈ 134M operations per token</code></pre>
+<p>The mHC mixing is <strong>1000× cheaper</strong> in terms of compute! It’s literally just multiplying a tiny 4×4 matrix by the streams. This is “lightweight math.”</p>
+<p><strong>Memory Complexity (Bytes):</strong> But we need to <strong>store</strong> those 4 expanded streams:</p>
+<pre><code>Memory = 4 streams × 4096 dim × 2 bytes = 32,768 bytes per token
+vs.
+Standard = 1 stream × 4096 dim × 2 bytes = 8,192 bytes per token</code></pre>
+<p><strong>4× more memory</strong>, but the computation is negligible. Modern GPUs are <strong>memory-bandwidth limited</strong>, not compute-limited. Reading 3.2 TB of data from memory takes over 1 second, even if the actual math only takes 0.1 seconds! This is why the “recomputation trick” works - we trade a cheap 0.1s of extra compute to avoid paying the expensive 1s+ of memory I/O.</p>
+</section>
+<section id="solution-1-kernel-fusion-the-countertop-strategy" class="level3">
+<h3 class="anchored" data-anchor-id="solution-1-kernel-fusion-the-countertop-strategy">Solution 1: Kernel Fusion (The “Countertop” Strategy)</h3>
+<p>The first bottleneck is speed. The Sinkhorn algorithm requires reading and writing the matrix from memory 40 times (20 iterations × 2 operations per iteration).</p>
+<p><strong>The Delivery Truck Problem:</strong> Without fusion, each iteration loads from slow GPU HBM memory, performs fast computation, then writes back. The frequent memory transfers dominate the execution time.</p>
+<p><strong>With Kernel Fusion:</strong> 1. Load matrix from HBM to GPU registers (on-chip, high bandwidth) 2. Do ALL 20 iterations entirely in registers 3. Write final result back to HBM</p>
+<p>The solution is <strong>Kernel Fusion</strong>. By writing a custom kernel (using TileLang), the engineers load the small <img src="https://latex.codecogs.com/png.latex?n%20%5Ctimes%20n"> mixing matrix into the GPU’s ultra-fast registers. They perform all 20 iterations of the math right there, without ever sending intermediate results back to main memory. This turns a bandwidth-bound operation into a compute-bound one, significantly reducing the overhead of the Sinkhorn iterations.</p>
+</section>
+<section id="solution-2-selective-recomputing-the-salt-trick" class="level3">
+<h3 class="anchored" data-anchor-id="solution-2-selective-recomputing-the-salt-trick">Solution 2: Selective Recomputing (The “Salt” Trick)</h3>
+<p>Fusion fixes the speed, but we still have a 3.2 TB storage problem. This is where <strong>Selective Recomputing</strong> saves the day.</p>
+<p>The engineers realized that the mHC mixing operation is computationally cheap (lightweight math) but memory-heavy (massive tensors). Therefore, they made the strategic decision to <strong>delete</strong> the massive output immediately after using it. Instead of paying the “rent” of storing these expanded streams, they pay a tiny “tax” of extra compute to re-calculate them from scratch during the backward pass.</p>
+<p><strong>The optimal block size:</strong></p>
+<p><img src="https://latex.codecogs.com/png.latex?x_%7Bl+1%7D%20=%20x_l%20+%20F(x_l,%20W_l)"></p>
+<p>This formula minimizes total memory by balancing two factors: If blocks are too small, you need to store many checkpoints; if blocks are too large, you need huge transient memory for the active block.</p>
+<p>For a 100-layer model with n=4:</p>
+<pre><code>L_r* = √(4 × 100 / 6) ≈ 8-10 layers per block</code></pre>
+<p><strong>Memory breakdown with <img src="https://latex.codecogs.com/png.latex?L_r%20=%2010">:</strong></p>
+<pre><code>Resident memory (first layer of each block):
+  10 blocks × 1M tokens × 4 × 4096 × 2 bytes = 328 GB
+
+Transient memory (active block during backprop):
+  From Table 3: (n+2)C per layer = (4+2) × 4096 = 24,576 elements
+  10 layers × 1M tokens × 24,576 × 2 bytes = 492 GB
+
+Total peak: 820 GB (down from 3.2 TB, a 4× reduction!)</code></pre>
+<p><img src="https://rish-av.github.io/files/images/figure5.png" class="img-fluid" style="width:100.0%" alt="Recomputation Strategy"> <em>Figure 4 from the paper - shows the communication-computation overlapping strategy</em></p>
+<p>This trade-off allows the impossible model to fit onto standard hardware.</p>
+<hr>
+</section>
+</section>
+<section id="part-6-from-theory-to-code" class="level2">
+<h2 class="anchored" data-anchor-id="part-6-from-theory-to-code">Part 6: From Theory to Code</h2>
+<p>This is just the basic variant, I will be writing more about the code in details in coming posts.</p>
+<p>To realize the savings we calculated - avoiding the 3.2 TB memory explosion - we must translate our “Traffic Rules” and “Salt Trick” into actual code. We can replicate the exact logic using <strong>JAX</strong>, where <strong>JIT (Just-In-Time)</strong> handles Kernel Fusion and <strong>Checkpointing</strong> handles Recomputing.</p>
+<p><strong>Note:</strong> The code below shows only the Sinkhorn-Knopp projection and core mixing operation. A complete mHC implementation requires integrating the pre-aggregation (<img src="https://latex.codecogs.com/png.latex?H%5E%7Bpre%7D_l">) and post-distribution (<img src="https://latex.codecogs.com/png.latex?H%5E%7Bpost%7D_l">) matrices along with the residual function <img src="https://latex.codecogs.com/png.latex?F(x,%20W)">. See the paper for full architectural details.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># 1. THE ENFORCER: Sinkhorn-Knopp Projection</span></span>
+<span id="cb13-2"><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">@jax.jit</span></span>
+<span id="cb13-3"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> sinkhorn_knopp(log_matrix, iterations<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">20</span>, eps<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1e-8</span>):</span>
+<span id="cb13-4">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Line below implements: M^(0) = exp(H̃^res_l)</span></span>
+<span id="cb13-5">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># From Equation 8 (page 9): H^res_l = Sinkhorn-Knopp(H̃^res_l)</span></span>
+<span id="cb13-6">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Initial step before Equation 9</span></span>
+<span id="cb13-7">    M <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> jnp.exp(log_matrix)  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># ← Initial M^(0)</span></span>
+<span id="cb13-8">    </span>
+<span id="cb13-9">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> body_fun(i, mat):</span>
+<span id="cb13-10">        <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Both lines below implement Equation 9 (page 9):</span></span>
+<span id="cb13-11">        <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># M^(t) = T_r(T_c(M^(t-1)))</span></span>
+<span id="cb13-12">        </span>
+<span id="cb13-13">        mat <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> mat <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span> (jnp.<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">sum</span>(mat, axis<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, keepdims<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">True</span>) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> eps)  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># ← T_r (row normalization)</span></span>
+<span id="cb13-14">        mat <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> mat <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span> (jnp.<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">sum</span>(mat, axis<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, keepdims<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">True</span>) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> eps)  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># ← T_c (column normalization)</span></span>
+<span id="cb13-15">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> mat</span>
+<span id="cb13-16"></span>
+<span id="cb13-17">    M <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> jax.lax.fori_loop(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, iterations, body_fun, M)  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># ← Iterates Equation 9 for t_max iterations</span></span>
+<span id="cb13-18">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> M</span>
+<span id="cb13-19"></span>
+<span id="cb13-20"></span>
+<span id="cb13-21"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># 2. THE LAYER: Putting it together</span></span>
+<span id="cb13-22"><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">@jax.checkpoint</span> </span>
+<span id="cb13-23"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> mhc_layer(x, w_res_log):</span>
+<span id="cb13-24">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Line below: Third line of Equation 8 (page 9)</span></span>
+<span id="cb13-25">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># H^res_l = Sinkhorn-Knopp(H̃^res_l)</span></span>
+<span id="cb13-26">    H_res <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> sinkhorn_knopp(w_res_log)  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># ← Equation 8 (third line)</span></span>
+<span id="cb13-27">    </span>
+<span id="cb13-28">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Line below: First term of Equation 3 (page 3)</span></span>
+<span id="cb13-29">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># x_{l+1} = H^res_l x_l + (H^post_l)^T F(H^pre_l x_l, W_l)</span></span>
+<span id="cb13-30">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#           ^^^^^^^^^^^^ (this part only)</span></span>
+<span id="cb13-31">    x_new <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> jnp.matmul(H_res, x)  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># ← First term of Equation 3</span></span>
+<span id="cb13-32">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> x_new</span></code></pre></div></div>
+<p><strong>Key Implementation Details:</strong></p>
+<p><strong><code>@jax.jit</code> - Kernel Fusion:</strong> Tells JAX to compile the function into optimized GPU kernels. The <code>fori_loop</code> iterations are unrolled and fused into a single kernel where all 20 Sinkhorn iterations stay in GPU registers.</p>
+<p><strong><code>@jax.checkpoint</code> - Selective Recomputing:</strong> Discards function outputs after forward pass and automatically recomputes them during backward pass. Saves <img src="https://latex.codecogs.com/png.latex?4%20%5Ctimes"> memory at ~0.4% compute cost.</p>
+<hr>
+</section>
+<section id="part-7-so-where-are-we" class="level2">
+<h2 class="anchored" data-anchor-id="part-7-so-where-are-we">Part 7: So where are we?</h2>
+<p>We’ve walked through the theoretical crash of Hyper-Connections and the engineering gymnastics required to fix it. But does the <strong>Manifold Constraint</strong> actually work in practice? The results from the DeepSeek-V3 technical report offer a definitive “yes.”</p>
+<section id="the-rocket-launch-confirmed" class="level3">
+<h3 class="anchored" data-anchor-id="the-rocket-launch-confirmed">The “Rocket Launch” Confirmed</h3>
+<p>Recall our fear that unconstrained Hyper-Connections would lead to exploding gradients. We can now look at the empirical evidence in the paper.</p>
+<p><img src="https://rish-av.github.io/files/images/figure3.png" class="img-fluid" style="width:100.0%" alt="Gradient Magnitude Comparison"> <em>Figure 7 from the paper - shows mHC maintains stable gradient magnitude around 1.0 while HC explodes to nearly 10^4</em></p>
+<p>The blue line (standard Hyper-Connected model, unconstrained) shoots up exponentially, with the backward gradient gain reaching a magnitude of nearly <strong>10^4</strong>. This is the “Rocket Launch” in real life - a signal explosion that destroys training stability.</p>
+<p>In stark contrast, the grey line (mHC model) stays perfectly flat near <strong>1.0</strong>. The “Traffic Rules” work. The signal is conserved, allowing the model to train as stably as a standard ResNet, even with the expanded highway.</p>
+</section>
+<section id="stability-at-scale" class="level3">
+<h3 class="anchored" data-anchor-id="stability-at-scale">Stability at Scale</h3>
+<p>This stability isn’t just a neat chart; it translates directly to training performance.</p>
+<p><img src="https://rish-av.github.io/files/images/figure2.png" class="img-fluid" style="width:100.0%" alt="Training Stability"> <em>Figure 5 from the paper - shows smooth training curves for mHC vs unstable HC</em></p>
+<p>mHC achieves a <strong>loss gap improvement of roughly 0.021</strong> compared to the baseline. In the world of Large Language Models, where improvements are measured in fractions of a percent, this is a massive leap in efficiency.</p>
+</section>
+<section id="the-cost-of-safety" class="level3">
+<h3 class="anchored" data-anchor-id="the-cost-of-safety">The Cost of Safety</h3>
+<p>The most impressive part of this story, however, is the price tag. Because of the <strong>Kernel Fusion</strong> and <strong>Selective Recomputing</strong> strategies, the paper reports that mHC introduces only a <strong>6.7% increase</strong> in training time compared to a standard model.</p>
+<p>This is the “Free Lunch” of Deep Learning: we get the massive capacity increase of a 4-lane highway for nearly the price of a single-lane road.</p>
+<p><img src="https://rish-av.github.io/files/images/figure6.png" class="img-fluid" style="width:100.0%" alt="Scaling Results"> <em>Figure 6 from the paper - shows mHC maintains advantages across different scales</em></p>
+</section>
+<section id="performance-on-real-benchmarks" class="level3">
+<h3 class="anchored" data-anchor-id="performance-on-real-benchmarks">Performance on Real Benchmarks</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Benchmark</th>
+<th>Baseline</th>
+<th>HC</th>
+<th><strong>mHC</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>BBH (Reasoning)</td>
+<td>43.8</td>
+<td>48.9</td>
+<td><strong>51.0</strong></td>
+</tr>
+<tr class="even">
+<td>DROP (Reading)</td>
+<td>47.0</td>
+<td>51.6</td>
+<td><strong>53.9</strong></td>
+</tr>
+<tr class="odd">
+<td>GSM8K (Math)</td>
+<td>46.7</td>
+<td>53.2</td>
+<td><strong>53.8</strong></td>
+</tr>
+<tr class="even">
+<td>MMLU (Knowledge)</td>
+<td>59.0</td>
+<td>63.0</td>
+<td><strong>63.4</strong></td>
+</tr>
+</tbody>
+</table>
+<p>mHC yields comprehensive improvements, consistently outperforming the baseline and surpassing HC on the majority of tasks. Notably, compared to HC, mHC further enhances the model’s reasoning capabilities, delivering performance gains of 2.1% on BBH and 2.3% on DROP.</p>
+<hr>
+</section>
+</section>
+<section id="part-8-open-questions" class="level2">
+<h2 class="anchored" data-anchor-id="part-8-open-questions">Part 8: Open Questions</h2>
+<p>While mHC has solved the immediate problem of stabilizing Hyper-Connections, it opens a fascinating door for future research. We used the <strong>Birkhoff Polytope</strong> because it intuitively maps to “conservation of energy.” But is this the only - or even the best - manifold for deep learning?</p>
+<section id="alternative-manifolds-a-brief-history" class="level3">
+<h3 class="anchored" data-anchor-id="alternative-manifolds-a-brief-history">Alternative Manifolds: A Brief History</h3>
+<p>The idea of constraining weights to specific manifolds isn’t new. It’s part of a rich research tradition in <strong>Geometric Deep Learning</strong>. Two notable successes stand out:</p>
+<p><strong>Spectral Normalization (2018)</strong> - One of the most successful manifold constraints for GANs (<a href="https://arxiv.org/abs/1802.05957">Miyato et al., 2018</a>). They constrain weight matrices to have a maximum singular value of 1, which is geometrically equivalent to projecting onto a specific manifold. Just like mHC, spectral normalization prevents gradient explosions by bounding the Lipschitz constant of the network. It became standard in GAN training because it stabilized discriminator training.</p>
+<p><strong>Stiefel Manifold for Orthogonal Weights</strong> - The set of all orthonormal matrices (where columns are perpendicular unit vectors). Several papers have explored this:</p>
+<p><strong>Orthogonal RNNs</strong> (<a href="https://arxiv.org/abs/1602.06664">Henaff et al., 2016</a>) showed that orthogonal recurrent weight matrices help RNNs learn long-term dependencies. The <strong>Riemannian Approach to Batch Normalization</strong> (<a href="https://arxiv.org/abs/1803.10094">Cho &amp; Lee, 2017</a>) used manifold optimization for normalization layers.</p>
+<p><strong>The connection to mHC:</strong> Orthogonality constraints preserve norm (like doubly stochastic matrices) but they force <strong>diversity</strong> between features rather than <strong>mixing</strong>. mHC chose doubly stochastic because it allows flexible mixing while preserving total energy. Could the Stiefel manifold work for mHC? It might encourage more specialized stream representations. The challenge is computational cost - orthogonal projections require SVD, which is more expensive than Sinkhorn iterations.</p>
+<p>Mathematically, the Birkhoff Polytope is just one of many choices. We could imagine projecting weights onto other manifolds that capture different properties of the loss landscape.</p>
+</section>
+<section id="efficiency-questions" class="level3">
+<h3 class="anchored" data-anchor-id="efficiency-questions">Efficiency Questions</h3>
+<p>There is also the question of efficiency. We currently use 20 iterations of Sinkhorn-Knopp to enforce the rules. Could we get away with 5? Or is there a learned approximation - a small neural network that predicts the projection in a single step - that could replace the iterative loop entirely? As models continue to grow, these questions of “Geometric Deep Learning” will likely become the new frontier of optimization.</p>
+<hr>
+</section>
+</section>
+<section id="conclusion-the-physics-of-the-signal" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion-the-physics-of-the-signal">Conclusion: The Physics of the Signal</h2>
+<p>The story of DeepSeek-V3’s <strong>Manifold-Constrained Hyper-Connections</strong> is a masterclass in modern AI research. It identifies a fundamental structural flaw (the lack of Identity Mapping in expanded streams), solves it with rigorous mathematics (the Birkhoff Polytope), and makes it feasible with hardcore systems engineering (TileLang Fusion and Recomputing).</p>
+<p>For us developers and researchers, the lesson is clear: <strong>Scaling isn’t just about making things bigger</strong>. It’s about understanding the “Physics” of the signal. If you can control the flow of information - keeping it on the “Safe Manifold” - you can break the memory wall and build models that are both larger and smarter than we thought possible. (See Figure 1(c) at the beginning of this post)</p>
+<hr>
+</section>
+<section id="references-further-reading" class="level2">
+<h2 class="anchored" data-anchor-id="references-further-reading">References &amp; Further Reading</h2>
+<p><strong>Paper:</strong> <a href="https://arxiv.org/abs/2512.24880">mHC: Manifold-Constrained Hyper-Connections</a> (DeepSeek-AI, 2025)</p>
+<p><strong>Original HC Paper:</strong> <a href="https://arxiv.org/abs/2409.19606">Hyper-Connections</a> (Zhu et al., 2024)</p>
+<p><strong>Classic Reference:</strong> <a href="https://arxiv.org/abs/1603.05027">Identity Mappings in Deep Residual Networks</a> (He et al., 2016)</p>
+<p><strong>Manifold Constraints:</strong> - <a href="https://arxiv.org/abs/1802.05957">Spectral Normalization for GANs</a> (Miyato et al., 2018) - <a href="https://arxiv.org/abs/1602.06664">Orthogonal RNNs</a> (Henaff et al., 2016) - <a href="https://arxiv.org/abs/1803.10094">Riemannian Batch Normalization</a> (Cho &amp; Lee, 2017)</p>
+
+
+</section>
+
+ ]]></description>
+  <category>ai</category>
+  <guid>https://rish-av.github.io/posts/2026-01-03-mHC/</guid>
+  <pubDate>Sat, 03 Jan 2026 07:00:00 GMT</pubDate>
+  <media:content url="https://rish-av.github.io/files/images/combined.png" medium="image" type="image/png" height="74" width="144"/>
+</item>
+<item>
+  <title>GSPO vs GRPO - Theory, Practice, and the Limits of Approximation</title>
+  <link>https://rish-av.github.io/posts/2025-11-23-GSPO_GRPO/</link>
+  <description><![CDATA[ 
+
+
+
+
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    processEscapes: true,
+    processEnvironments: true
+  },
+  startup: {
+    ready: () => {
+      MathJax.startup.defaultReady();
+      MathJax.startup.promise.then(() => {
+        // Typeset the entire document after MathJax is ready
+        MathJax.typesetPromise();
+      });
+    }
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+<p>When Qwen released their GSPO paper questioning GRPO’s theoretical foundations, they ignited a debate about theoretical correctness versus empirical success. GSPO offers stronger theoretical guarantees. GRPO makes approximations in its importance sampling approach that can be problematic. Yet GRPO powers state-of-the-art models like DeepSeek-R1, which achieved breakthrough performance on mathematical reasoning tasks. This post examines why both perspectives have merit and what this reveals about the theory-practice gap in deep learning.</p>
+<section id="the-theoretical-problem" class="level2">
+<h2 class="anchored" data-anchor-id="the-theoretical-problem">The Theoretical Problem</h2>
+<p>GRPO’s objective computes token-level importance weights using single samples from each token distribution:</p>
+<p><img src="https://latex.codecogs.com/png.latex?J_%7B%5Ctext%7BGRPO%7D%7D(%5Ctheta)%20=%20%5Cmathbb%7BE%7D%5Cleft%5B%5Cfrac%7B1%7D%7BG%7D%20%5Csum_%7Bi=1%7D%5E%7BG%7D%20%5Cfrac%7B1%7D%7B%5Clvert%20y_i%20%5Crvert%7D%20%5Csum_%7Bt=1%7D%5E%7B%5Clvert%20y_i%20%5Crvert%7D%20%5Cmin%5Cleft(w_%7Bi,t%7D(%5Ctheta)%5Chat%7BA%7D_i,%20%5Ctext%7Bclip%7D(w_%7Bi,t%7D(%5Ctheta),%201-%5Cvarepsilon,%201+%5Cvarepsilon)%5Chat%7BA%7D_i%5Cright)%5Cright%5D"></p>
+<p>where the importance ratio at each token is:</p>
+<p><img src="https://latex.codecogs.com/png.latex?w_%7Bi,t%7D(%5Ctheta)%20=%20%5Cfrac%7B%5Cpi_%5Ctheta(y_%7Bi,t%7D%20%5Cmid%20x,%20y_%7Bi,%3Ct%7D)%7D%7B%5Cpi_%7B%5Ctheta_%7B%5Ctext%7Bold%7D%7D%7D(y_%7Bi,t%7D%20%5Cmid%20x,%20y_%7Bi,%3Ct%7D)%7D"></p>
+<p>The importance sampling principle requires multiple samples to make reweighting valid. For a random variable <img src="https://latex.codecogs.com/png.latex?z">, proper importance sampling states:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cmathbb%7BE%7D_%7B%5Cpi_%7B%5Ctext%7Btarget%7D%7D%7D%5Bf(z)%5D%20=%20%5Cmathbb%7BE%7D_%7B%5Cpi_%7B%5Ctext%7Bbehavior%7D%7D%7D%5Cleft%5B%5Cfrac%7B%5Cpi_%7B%5Ctext%7Btarget%7D%7D(z)%7D%7B%5Cpi_%7B%5Ctext%7Bbehavior%7D%7D(z)%7D%20%5Ccdot%20f(z)%5Cright%5D"></p>
+<p>This equality holds asymptotically as the number of samples from <img src="https://latex.codecogs.com/png.latex?%5Cpi_%7B%5Ctext%7Bbehavior%7D%7D"> approaches infinity. GRPO computes <img src="https://latex.codecogs.com/png.latex?w_%7Bi,t%7D"> using a single sample <img src="https://latex.codecogs.com/png.latex?y_%7Bi,t%7D"> from <img src="https://latex.codecogs.com/png.latex?%5Cpi_%7B%5Ctheta_%7B%5Ctext%7Bold%7D%7D%7D(%5Ccdot%20%5Cmid%20x,%20y_%7Bi,%3Ct%7D)">. With only one sample per token position, the importance weight cannot perform valid distribution correction. Instead, it introduces high-variance noise that accumulates multiplicatively across the sequence length.</p>
+<p>It’s important to note that using single samples with importance weights is not inherently invalid. Many policy gradient methods do this. The question is whether GRPO’s specific token-level aggregation of these weights introduces problematic variance, particularly as sequence length increases. The concern is less about “violating” importance sampling and more about whether this approximation remains reasonable under various conditions.</p>
+<p>Consider a 1000-token response. GRPO computes 1000 independent importance weights, each based on a single sample. If we denote the estimation error at token <img src="https://latex.codecogs.com/png.latex?t"> as <img src="https://latex.codecogs.com/png.latex?%5Cepsilon_t">, the accumulated effect scales as <img src="https://latex.codecogs.com/png.latex?%5Cexp(%5Csum_t%20%5Cepsilon_t)"> or <img src="https://latex.codecogs.com/png.latex?%5Cprod_t%20(1%20+%20%5Cepsilon_t)">. Small per-token errors compound into large sequence-level errors. Qwen’s experiments show this accumulation leads to “catastrophic and irreversible model collapse” particularly in Mixture-of-Experts models and long-context scenarios.</p>
+<p>GSPO corrects this by computing importance ratios at the sequence level:</p>
+<p><img src="https://latex.codecogs.com/png.latex?J_%7B%5Ctext%7BGSPO%7D%7D(%5Ctheta)%20=%20%5Cmathbb%7BE%7D%5Cleft%5B%5Cfrac%7B1%7D%7BG%7D%20%5Csum_%7Bi=1%7D%5E%7BG%7D%20%5Cmin%5Cleft(s_i(%5Ctheta)%5Chat%7BA%7D_i,%20%5Ctext%7Bclip%7D(s_i(%5Ctheta),%201-%5Cvarepsilon,%201+%5Cvarepsilon)%5Chat%7BA%7D_i%5Cright)%5Cright%5D"></p>
+<p>where:</p>
+<p><img src="https://latex.codecogs.com/png.latex?s_i(%5Ctheta)%20=%20%5Cleft(%5Cfrac%7B%5Cpi_%5Ctheta(y_i%20%5Cmid%20x)%7D%7B%5Cpi_%7B%5Ctheta_%7B%5Ctext%7Bold%7D%7D%7D(y_i%20%5Cmid%20x)%7D%5Cright)%5E%7B%5Cfrac%7B1%7D%7B%5Clvert%20y_i%20%5Crvert%7D%7D"></p>
+<p>The exponent <img src="https://latex.codecogs.com/png.latex?%5Cfrac%7B1%7D%7B%5Clvert%20y_i%20%5Crvert%7D"> applies length normalization via geometric mean, preventing longer sequences from dominating the importance ratio. All tokens in sequence <img src="https://latex.codecogs.com/png.latex?y_i"> share the same weight <img src="https://latex.codecogs.com/png.latex?s_i(%5Ctheta)">, eliminating token-level fluctuations. This aligns the optimization unit with the reward unit, since rewards are assigned to complete sequences rather than individual tokens.</p>
+</section>
+<section id="gradient-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="gradient-analysis">Gradient Analysis</h2>
+<p>The gradient expressions reveal the fundamental difference. For GRPO:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cnabla_%5Ctheta%20J_%7B%5Ctext%7BGRPO%7D%7D%20=%20%5Cmathbb%7BE%7D%5Cleft%5B%5Cfrac%7B1%7D%7BG%7D%20%5Csum_%7Bi=1%7D%5E%7BG%7D%20%5Chat%7BA%7D_i%20%5Ccdot%20%5Cfrac%7B1%7D%7B%5Clvert%20y_i%20%5Crvert%7D%20%5Csum_%7Bt=1%7D%5E%7B%5Clvert%20y_i%20%5Crvert%7D%20%5Cfrac%7B%5Cpi_%5Ctheta(y_%7Bi,t%7D%20%5Cmid%20x,%20y_%7Bi,%3Ct%7D)%7D%7B%5Cpi_%7B%5Ctheta_%7B%5Ctext%7Bold%7D%7D%7D(y_%7Bi,t%7D%20%5Cmid%20x,%20y_%7Bi,%3Ct%7D)%7D%20%5Ccdot%20%5Cnabla_%5Ctheta%20%5Clog%20%5Cpi_%5Ctheta(y_%7Bi,t%7D%20%5Cmid%20x,%20y_%7Bi,%3Ct%7D)%5Cright%5D"></p>
+<p>For GSPO:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cnabla_%5Ctheta%20J_%7B%5Ctext%7BGSPO%7D%7D%20=%20%5Cmathbb%7BE%7D%5Cleft%5B%5Cfrac%7B1%7D%7BG%7D%20%5Csum_%7Bi=1%7D%5E%7BG%7D%20%5Cleft(%5Cfrac%7B%5Cpi_%5Ctheta(y_i%20%5Cmid%20x)%7D%7B%5Cpi_%7B%5Ctheta_%7B%5Ctext%7Bold%7D%7D%7D(y_i%20%5Cmid%20x)%7D%5Cright)%5E%7B%5Cfrac%7B1%7D%7B%5Clvert%20y_i%20%5Crvert%7D%7D%20%5Ccdot%20%5Chat%7BA%7D_i%20%5Ccdot%20%5Cfrac%7B1%7D%7B%5Clvert%20y_i%20%5Crvert%7D%20%5Csum_%7Bt=1%7D%5E%7B%5Clvert%20y_i%20%5Crvert%7D%20%5Cnabla_%5Ctheta%20%5Clog%20%5Cpi_%5Ctheta(y_%7Bi,t%7D%20%5Cmid%20x,%20y_%7Bi,%3Ct%7D)%5Cright%5D"></p>
+<p>In GRPO, each token <img src="https://latex.codecogs.com/png.latex?t"> receives its own importance weight. These weights can vary arbitrarily: token 1 might get weight 0.5, token 2 weight 2.8, token 500 weight 0.09. The unequal weighting creates gradient variance that accumulates across the sequence. In GSPO, all tokens in sequence <img src="https://latex.codecogs.com/png.latex?i"> share the same scalar weight, producing uniform treatment and stable gradients.</p>
+<p>The following diagram illustrates the difference:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://rish-av.github.io/files/images/img/gspo_vs_grpo.png" class="img-fluid figure-img"></p>
+<figcaption>Token-Level vs Sequence-Level Weighting</figcaption>
+</figure>
+</div>
+<div style="background-color: #f0f4f8; padding: 20px; border-radius: 5px; font-family: monospace; margin: 20px 0; color: #1a1a1a; border-left: 4px solid #0084ff;">
+<p><strong style="color: #0066cc;">GRPO Token-Level Weighting:</strong><br> Token: [ 1 ] [ 2 ] [ 3 ] … [ 999 ] [1000]<br> Weight: [0.8 ] [2.1 ] [0.3 ] … [1.7 ] [0.1 ]<br> <span style="color: #d32f2f;">→ High variance, noisy gradients</span><br><br></p>
+<p><strong style="color: #0066cc;">GSPO Sequence-Level Weighting:</strong><br> Token: [ 1 ] [ 2 ] [ 3 ] … [ 999 ] [1000]<br> Weight: [1.05] [1.05] [1.05] … [1.05] [1.05]<br> <span style="color: #2e7d32;">→ Uniform, stable gradients</span></p>
+</div>
+</section>
+<section id="empirical-evidence" class="level2">
+<h2 class="anchored" data-anchor-id="empirical-evidence">Empirical Evidence</h2>
+<p><strong>Note on experimental setup:</strong> The following results are reported from the RSPO paper. A fair comparison requires equivalent hyperparameter tuning effort for all methods. While these results suggest significant issues with GRPO on MoE architectures, the approximations (“~”) in GRPO’s scores and the specific experimental conditions warrant careful interpretation.</p>
+<p>The evidence from training on Mixture-of-Experts architectures is striking. The RSPO paper evaluated Qwen3-30B-A3B across five mathematical reasoning benchmarks:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Benchmark</th>
+<th>Base Model</th>
+<th>GRPO</th>
+<th>GSPO</th>
+<th>GMPO</th>
+<th>RSPO</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>AIME24</td>
+<td>43.3</td>
+<td>~20</td>
+<td>74.1</td>
+<td>73.3</td>
+<td>80.0</td>
+</tr>
+<tr class="even">
+<td>AMC23</td>
+<td>69.9</td>
+<td>~45</td>
+<td>77.1</td>
+<td>75.9</td>
+<td>79.5</td>
+</tr>
+<tr class="odd">
+<td>MATH500</td>
+<td>82.8</td>
+<td>~70</td>
+<td>88.2</td>
+<td>88.6</td>
+<td>88.4</td>
+</tr>
+<tr class="even">
+<td>Minerva</td>
+<td>48.5</td>
+<td>~35</td>
+<td>58.1</td>
+<td>57.0</td>
+<td>61.8</td>
+</tr>
+<tr class="odd">
+<td>OlympiadBench</td>
+<td>44.7</td>
+<td>~40</td>
+<td>54.2</td>
+<td>54.8</td>
+<td>52.6</td>
+</tr>
+<tr class="even">
+<td><strong>Average</strong></td>
+<td><strong>57.8</strong></td>
+<td><strong>35.0</strong></td>
+<td><strong>70.3</strong></td>
+<td><strong>69.9</strong></td>
+<td><strong>77.1</strong></td>
+</tr>
+</tbody>
+</table>
+<p>GRPO not only underperforms GSPO but actually degrades below the base model. Training curves show pronounced collapse around 200 to 500 steps. The cause is expert activation volatility: after each gradient update in a 48-layer MoE model, approximately 10% of activated experts change for the same input. Token-level importance ratios <img src="https://latex.codecogs.com/png.latex?w_%7Bi,t%7D"> fluctuate drastically as different experts are selected, preventing convergence.</p>
+<p>This expert volatility explanation is plausible and consistent with the observed failures, though definitively proving causation would require ablation studies isolating this factor from other potential causes like learning rates, batch sizes, or other architectural interactions.</p>
+<p>GSPO avoids this failure mode because sequence-level likelihoods remain stable even when individual token expert assignments shift. The sequence likelihood <img src="https://latex.codecogs.com/png.latex?%5Cpi_%5Ctheta(y_i%20%5Cmid%20x)"> aggregates over all token-level expert decisions, smoothing out routing variability. This eliminates the need for “Routing Replay,” a complex workaround that caches expert routes from the old policy and replays them during importance ratio computation.</p>
+<p>On AIME 2024 using Qwen2.5-32B base, the performance gap is equally stark:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Score</th>
+<th>Training Steps</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Vanilla GRPO</td>
+<td>30</td>
+<td>Baseline</td>
+</tr>
+<tr class="even">
+<td>GSPO</td>
+<td>70-80</td>
+<td>Same</td>
+</tr>
+<tr class="odd">
+<td>GRPO + engineering (DAPO)</td>
+<td>50</td>
+<td>50% of DeepSeek</td>
+</tr>
+<tr class="even">
+<td>GRPO + engineering (SRPO)</td>
+<td>50</td>
+<td>10% of DeepSeek</td>
+</tr>
+</tbody>
+</table>
+<p>Vanilla GRPO achieves only 30 points, while GSPO reaches 70 to 80 points with equivalent compute. The DAPO and SRPO variants improve GRPO by adding extensive engineering: asymmetric clipping, dynamic sampling, token-level loss modifications, and two-stage training. These modifications compensate for GRPO’s theoretical deficiencies but require significant implementation complexity.</p>
+<p>A counter-intuitive finding emerges from analyzing clipping statistics. GRPO clips approximately 0.13% of tokens during training, while GSPO clips 15% of tokens (two orders of magnitude more). Yet GSPO achieves superior performance. This demonstrates that GRPO’s token-level gradients are inherently noisy. Even unclipped gradients hurt rather than help. GSPO’s aggressive sequence-level clipping effectively filters out high-variance samples.</p>
+</section>
+<section id="the-gspo-length-bias-issue" class="level2">
+<h2 class="anchored" data-anchor-id="the-gspo-length-bias-issue">The GSPO Length Bias Issue</h2>
+<p>While GSPO addresses GRPO’s variance problems, it introduces its own limitation: <strong>length bias</strong>. The geometric mean normalization in GSPO’s importance ratio:</p>
+<p><img src="https://latex.codecogs.com/png.latex?s_i(%5Ctheta)%20=%20%5Cleft(%5Cfrac%7B%5Cpi_%5Ctheta(y_i%20%5Cmid%20x)%7D%7B%5Cpi_%7B%5Ctheta_%7B%5Ctext%7Bold%7D%7D%7D(y_i%20%5Cmid%20x)%7D%5Cright)%5E%7B%5Cfrac%7B1%7D%7B%5Clvert%20y_i%20%5Crvert%7D%7D"></p>
+<p>can create systematic biases in how the model treats responses of different lengths. Specifically:</p>
+<ol type="1">
+<li><strong>Short sequences</strong> receive disproportionately large importance weights when they deviate from the old policy, potentially leading to over-optimization on brief responses</li>
+<li><strong>Long sequences</strong> have their importance ratios dampened even when they represent significant policy changes, potentially under-weighting important long-form improvements</li>
+<li><strong>Length-dependent convergence</strong>: The effective learning rate becomes implicitly coupled to sequence length, which may not align with the true importance of different responses</li>
+</ol>
+<p>This length bias can manifest in practice as models that either truncate responses prematurely (to exploit the short-sequence advantage) or fail to learn from long chains of reasoning (due to dampened signals). The issue is particularly problematic for tasks requiring variable-length reasoning where the optimal response length is itself a learned quantity.</p>
+</section>
+<section id="dynamic-reward-grpo-the-current-state-of-the-art" class="level2">
+<h2 class="anchored" data-anchor-id="dynamic-reward-grpo-the-current-state-of-the-art">Dynamic Reward GRPO: The Current State-of-the-Art</h2>
+<p>Recent work has shown that <strong>Dynamic Reward GRPO (DR GRPO)</strong> addresses both GRPO’s variance issues and GSPO’s length bias, emerging as the current best-performing method in practice. DR GRPO introduces several key innovations:</p>
+<section id="key-improvements-in-dr-grpo" class="level3">
+<h3 class="anchored" data-anchor-id="key-improvements-in-dr-grpo">Key Improvements in DR GRPO</h3>
+<ol type="1">
+<li><p><strong>Dynamic advantage normalization</strong>: Instead of using fixed rewards, DR GRPO adaptively normalizes advantages based on sequence statistics, reducing the impact of length-dependent variance</p></li>
+<li><p><strong>Token-level variance reduction</strong>: Implements sophisticated variance reduction techniques that maintain token-level granularity while controlling noise accumulation</p></li>
+<li><p><strong>Hybrid importance weighting</strong>: Combines elements of token-level and sequence-level importance sampling, dynamically adjusting based on sequence characteristics</p></li>
+<li><p><strong>Length-agnostic optimization</strong>: Explicitly corrects for length bias through adaptive clipping ranges and normalization schemes</p></li>
+</ol>
+</section>
+<section id="empirical-performance" class="level3">
+<h3 class="anchored" data-anchor-id="empirical-performance">Empirical Performance</h3>
+<p>Current benchmarks suggest DR GRPO achieves: - Stability comparable to GSPO on MoE architectures - Performance exceeding both vanilla GRPO and GSPO on mathematical reasoning tasks - No length bias in learned policies - Better sample efficiency than GSPO in many scenarios</p>
+<p>The success of DR GRPO demonstrates that the token-level vs sequence-level debate may have been asking the wrong question. Rather than choosing between these extremes, the optimal approach appears to be a carefully engineered middle ground that preserves token-level signal while controlling variance through dynamic mechanisms.</p>
+</section>
+</section>
+<section id="why-grpo-works-despite-being-wrong" class="level2">
+<h2 class="anchored" data-anchor-id="why-grpo-works-despite-being-wrong">Why GRPO Works Despite Being Wrong</h2>
+<p>Given the theoretical concerns and empirical evidence of failure in specific contexts, why does GRPO succeed in others? Several mechanisms explain its continued effectiveness.</p>
+<section id="small-divergence-regime" class="level3">
+<h3 class="anchored" data-anchor-id="small-divergence-regime">Small Divergence Regime</h3>
+<p>When clipping keeps <img src="https://latex.codecogs.com/png.latex?%5Cpi_%5Ctheta"> close to <img src="https://latex.codecogs.com/png.latex?%5Cpi_%7B%5Ctheta_%7B%5Ctext%7Bold%7D%7D%7D">, the token-level approximation may be adequate. If policies are similar, we can write the token-level importance ratio as approximately <img src="https://latex.codecogs.com/png.latex?1%20+%20%5Cepsilon_t"> where <img src="https://latex.codecogs.com/png.latex?%5Cepsilon_t"> is small. The product over all tokens becomes <img src="https://latex.codecogs.com/png.latex?%5Cprod_t%20(1%20+%20%5Cepsilon_t)%20%5Capprox%20%5Cexp(%5Csum_t%20%5Cepsilon_t)">. If the per-token errors <img src="https://latex.codecogs.com/png.latex?%5Cepsilon_t"> are roughly independent and average to a reasonable value, accumulated error may not be catastrophic.</p>
+<p>This approximation breaks down in two scenarios. First, long sequences (1000+ tokens) accumulate many small errors into large total error. Second, MoE models violate the small divergence assumption because expert routing changes create large per-token probability shifts even when the overall policy changes moderately. The volatility of individual <img src="https://latex.codecogs.com/png.latex?w_%7Bi,t%7D"> values exceeds what clipping can control.</p>
+</section>
+<section id="empirical-risk-minimization" class="level3">
+<h3 class="anchored" data-anchor-id="empirical-risk-minimization">Empirical Risk Minimization</h3>
+<p>The theoretical objective may not be what matters for practical optimization. What matters is whether updates improve measured performance. GRPO’s updates are high variance and theoretically unjustified, yet they may still point in a productive direction on average. Deep learning is replete with methods whose theoretical justification was incorrect but which nonetheless work: the original explanation for batch normalization’s effectiveness was wrong, yet batch normalization remains standard practice.</p>
+<p>The question becomes whether GRPO provides a sufficiently strong learning signal despite its flaws. For dense models on shorter sequences, the answer appears to be yes, conditional on careful hyperparameter tuning. For MoE models on longer sequences, the answer is definitively no.</p>
+</section>
+<section id="engineering-as-theory-compensation" class="level3">
+<h3 class="anchored" data-anchor-id="engineering-as-theory-compensation">Engineering as Theory Compensation</h3>
+<p>DAPO adds four modifications to vanilla GRPO: asymmetric clipping (Clip-Higher), dynamic sampling, token-level policy gradient loss, and overlong reward shaping. These are not mere optimizations but compensations for theoretical deficiencies. Clip-Higher allows rare but important tokens to be explored by decoupling upper and lower clipping bounds. Dynamic sampling filters out samples that produce zero gradients, improving sample efficiency. Token-level loss reweights contributions to prevent length bias. Overlong reward shaping penalizes excessive length in a smooth manner.</p>
+<p>Each modification addresses a specific pathology caused by token-level importance weighting. The fact that extensive engineering can rescue GRPO demonstrates two points. First, the theoretical problems are real and manifest as practical issues. Second, the problems are not insurmountable for dense models with sufficient effort. However, the engineering complexity represents hidden cost that GSPO avoids.</p>
+</section>
+<section id="task-structure-and-forgiveness" class="level3">
+<h3 class="anchored" data-anchor-id="task-structure-and-forgiveness">Task Structure and Forgiveness</h3>
+<p>Some tasks may be more tolerant of algorithmic approximation errors. Dense models with shorter sequences provide fewer opportunities for token-level noise to accumulate. The task structure matters: if critical information is concentrated in a few key tokens rather than distributed evenly, token-level importance reweighting might accidentally emphasize those key tokens despite lacking theoretical justification.</p>
+<p>Conversely, tasks requiring precise long-range reasoning over 1000+ token chains of thought expose GRPO’s flaws maximally. The empirical pattern aligns with this hypothesis: GRPO struggles most on MoE models with long sequences, performs acceptably on dense models with shorter sequences, and falls between these extremes on intermediate scenarios.</p>
+</section>
+<section id="the-deepseek-r1-puzzle" class="level3">
+<h3 class="anchored" data-anchor-id="the-deepseek-r1-puzzle">The DeepSeek-R1 Puzzle</h3>
+<p>GRPO’s success in DeepSeek-R1 deserves careful examination rather than dismissal. DeepSeek-R1 achieved remarkable performance on mathematical reasoning benchmarks using GRPO, raising important questions: What conditions allowed GRPO to succeed there? Was it the dense (non-MoE) architecture? Shorter effective sequence lengths during critical training phases? Exceptional hyperparameter tuning? Or does the task structure of mathematical reasoning provide some robustness to GRPO’s approximation errors?</p>
+<p>The absence of public details about DeepSeek-R1’s training process makes definitive conclusions difficult. However, the empirical success suggests that for certain combinations of architecture, task, and sequence length, GRPO’s approximations remain within acceptable bounds. This doesn’t invalidate concerns about GRPO’s theoretical foundations, but it does highlight that the practical impact depends heavily on deployment context.</p>
+<p>Why didn’t DeepSeek use GSPO or DR GRPO? Possible explanations include: (1) GRPO was more mature when DeepSeek-R1 was developed, (2) their specific infrastructure was optimized for GRPO, (3) newer methods like DR GRPO may have implementation subtleties not captured in papers, or (4) their dense architecture and tuning made GRPO sufficient. The choice between algorithms involves engineering tradeoffs beyond pure theoretical optimality.</p>
+</section>
+</section>
+<section id="the-stability-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="the-stability-analysis">The Stability Analysis</h2>
+<p>Training stability metrics reveal GSPO’s robustness advantage:</p>
+<div style="max-width: 100%; overflow-x: auto; margin: 20px 0;">
+<p><img src="https://rish-av.github.io/files/images/gspo-vs-grpo-stability.png" alt="Training Stability Comparison" style="max-width: 100%; height: auto; display: block;"></p>
+</div>
+<p>The stability difference is qualitative, not quantitative. GRPO training exhibits high variance reward curves with frequent drops. Some drops recover, but others lead to irreversible collapse where even reverting to earlier checkpoints fails to restore training. GSPO training shows monotonic improvement with smooth reward curves. The absence of catastrophic failures enables longer training runs and more aggressive scaling of compute.</p>
+<p>Key metrics comparison:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 27%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 31%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Metric</th>
+<th>GRPO</th>
+<th>GSPO</th>
+<th>DR GRPO</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Clipping Rate</td>
+<td>0.13%</td>
+<td>15%</td>
+<td>~5-10%</td>
+</tr>
+<tr class="even">
+<td>Expert Routing Volatility</td>
+<td>~10% change per update</td>
+<td>Immune</td>
+<td>Reduced</td>
+</tr>
+<tr class="odd">
+<td>Failure Mode</td>
+<td>Catastrophic collapse</td>
+<td>Length bias</td>
+<td>Rare</td>
+</tr>
+<tr class="even">
+<td>Recovery</td>
+<td>Often irreversible</td>
+<td>N/A</td>
+<td>Good</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="production-deployment" class="level2">
+<h2 class="anchored" data-anchor-id="production-deployment">Production Deployment</h2>
+<p>Qwen3 models trained with GSPO demonstrate the algorithm’s scalability to production systems. The flagship Qwen3-235B-A22B achieves 85.7 on AIME’24 and 81.5 on AIME’25, substantially exceeding models trained with GRPO variants. On LiveCodeBench v5, it scores 70.7. On CodeForces, it achieves 2056 Elo rating. These results come from extended training runs that would be infeasible with GRPO’s instability.</p>
+<p>Infrastructure requirements differ significantly. GRPO requires Routing Replay for MoE models, adding memory overhead and communication cost. Routing Replay caches the expert routes from the old policy and replays them when computing importance ratios under the new policy. This ensures consistent expert activation but restricts the model’s capacity and complicates the training pipeline. GSPO eliminates this requirement entirely, simplifying infrastructure and allowing full utilization of model capacity.</p>
+<p>Precision tolerance also favors GSPO. Training engines and inference engines often have subtle numerical differences due to optimization choices. GRPO needs exact token-level likelihoods, requiring recomputation in the training engine even when likelihoods were already computed during inference. GSPO’s sequence-level optimization is robust to small numerical differences, potentially allowing direct use of inference engine likelihoods without recomputation. This matters for efficiency in partial rollout and multi-turn RL scenarios.</p>
+<p>DR GRPO appears to offer similar infrastructure simplifications while maintaining better performance characteristics, though widespread production deployments are still emerging.</p>
+</section>
+<section id="when-each-method-wins" class="level2">
+<h2 class="anchored" data-anchor-id="when-each-method-wins">When Each Method Wins</h2>
+<p>The empirical evidence suggests updated guidelines:</p>
+<p><strong>DR GRPO</strong> is the recommended default for new implementations given its strong empirical performance, lack of length bias, and reasonable stability. It represents the current state-of-the-art for most scenarios.</p>
+<p><strong>GSPO</strong> remains a strong choice when maximum training stability is critical, particularly for MoE models where GRPO’s failure is catastrophic. GSPO is also preferable when implementation simplicity matters more than peak performance, or when length bias is manageable for the specific task.</p>
+<p><strong>GRPO</strong> can still be viable for dense models with shorter sequences where its flaws are less exposed, or in legacy systems where migration cost exceeds the performance benefit. However, new implementations should strongly prefer DR GRPO or GSPO unless there are compelling infrastructure constraints.</p>
+</section>
+<section id="the-theoretical-lesson" class="level2">
+<h2 class="anchored" data-anchor-id="the-theoretical-lesson">The Theoretical Lesson</h2>
+<p>This case study illuminates the relationship between theory and practice in deep learning optimization. Theoretical correctness provides robustness guarantees but does not preclude success of theoretically flawed methods in restricted domains. GRPO violates importance sampling principles yet achieves competitive results on specific tasks with sufficient engineering. The violation matters in extreme regimes (MoE, long sequences) where theoretical predictions become empirically manifest.</p>
+<p>The emergence of DR GRPO suggests that the most successful approaches may synthesize insights from both extremes rather than adhering dogmatically to either token-level or sequence-level formulations. The pattern resembles other instances where theory and practice iterate: initial methods have theoretical issues, theoretically-motivated alternatives address some issues but introduce new limitations, and eventually sophisticated engineering produces methods that work well in practice while being more theoretically grounded.</p>
+</section>
+<section id="practical-recommendations" class="level2">
+<h2 class="anchored" data-anchor-id="practical-recommendations">Practical Recommendations</h2>
+<p>For new implementations, <strong>DR GRPO is the recommended starting point</strong> given current empirical evidence. If DR GRPO is not available or well-supported in your framework, GSPO is the next best choice. The implementation for GSPO is straightforward:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> trl <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> GRPOConfig</span>
+<span id="cb1-2"></span>
+<span id="cb1-3">config <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> GRPOConfig(</span>
+<span id="cb1-4">    importance_sampling_level<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"sequence"</span>,</span>
+<span id="cb1-5">    loss_type<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"grpo"</span>,</span>
+<span id="cb1-6">    beta<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0.0</span>,</span>
+<span id="cb1-7">    epsilon<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3e-4</span>,</span>
+<span id="cb1-8">    epsilon_high<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">4e-4</span>,</span>
+<span id="cb1-9">    gradient_accumulation_steps<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>,</span>
+<span id="cb1-10">    steps_per_generation<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">4</span>,</span>
+<span id="cb1-11">)</span></code></pre></div></div>
+<p>The key parameter is <code>importance_sampling_level="sequence"</code> which enables GSPO’s sequence-level importance weighting. The clipping ranges (<code>epsilon=3e-4</code>, <code>epsilon_high=4e-4</code>) are two orders of magnitude smaller than typical GRPO ranges because sequence-level ratios have different numerical scales than token-level ratios. Setting <code>beta=0.0</code> removes KL regularization, which GSPO authors found unnecessary for long chain-of-thought reasoning.</p>
+<p>For existing GRPO implementations, migration should be prioritized based on: - <strong>Critical</strong>: MoE architectures (GRPO fails catastrophically) - <strong>High priority</strong>: Long sequences (&gt;500 tokens), tasks where length bias matters - <strong>Medium priority</strong>: Production systems requiring high stability - <strong>Lower priority</strong>: Dense models with short sequences showing acceptable performance</p>
+<p>For MoE models specifically, GSPO or DR GRPO are non-negotiable. The empirical evidence shows that vanilla GRPO fails catastrophically on MoE, and even heavily engineered GRPO variants require complex infrastructure like Routing Replay.</p>
+</section>
+<section id="limitations-and-caveats" class="level2">
+<h2 class="anchored" data-anchor-id="limitations-and-caveats">Limitations and Caveats</h2>
+<p>This analysis has several limitations worth noting:</p>
+<p><strong>Potential GSPO Tradeoffs</strong>: The length bias issue in GSPO is a real concern that may impact certain applications. Tasks requiring variable-length reasoning or where optimal response length must be learned may suffer from GSPO’s geometric mean normalization.</p>
+<p><strong>DR GRPO Maturity</strong>: While DR GRPO shows promise, it’s a newer method with less production validation than GRPO or GSPO. Implementation details may vary, and hyperparameter sensitivity is not yet fully characterized.</p>
+<p><strong>Experimental Reproducibility</strong>: The empirical comparisons rely on results from published papers without independent replication. Training stability claims would benefit from open-source implementations and shared training curves.</p>
+<p><strong>Evolving Landscape</strong>: All three methods continue to evolve. Enhanced variants and potential refinements may shift the practical tradeoffs. The “optimal” choice may depend on rapidly changing infrastructure and tooling ecosystems.</p>
+<p><strong>Publication Bias</strong>: Papers naturally emphasize scenarios where their proposed method excels. The broader landscape of deployments (many in proprietary settings) may include success cases not reflected in academic publications.</p>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<p>The landscape of policy gradient methods for LLM alignment has evolved significantly:</p>
+<ul>
+<li><strong>GRPO</strong> offered simplicity but suffers from theoretical issues that manifest as catastrophic failures in MoE architectures and high variance in long sequences</li>
+<li><strong>GSPO</strong> corrected GRPO’s variance problems with sound theoretical foundations but introduced length bias</li>
+<li><strong>DR GRPO</strong> appears to address both sets of issues, representing the current state-of-the-art</li>
+</ul>
+<p>For practitioners, the choice hierarchy is clear: 1. <strong>First choice</strong>: DR GRPO if available and well-supported 2. <strong>Strong alternative</strong>: GSPO for stability-critical applications or when DR GRPO is unavailable 3. <strong>Legacy only</strong>: GRPO for existing systems where migration cost outweighs benefits</p>
+<p>The broader lesson is that theory and practice exist in productive tension. Theory predicts failure modes that may not be immediately visible. Practice reveals which theoretical concerns matter most and which can be addressed through engineering. DR GRPO exemplifies an algorithm where theory and practice iterate to produce methods that are both theoretically motivated and empirically superior.</p>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/2507.18071">GSPO Paper</a> - Group Sequence Policy Optimization</li>
+<li><a href="https://arxiv.org/abs/2402.03300">GRPO Paper</a> - DeepSeekMath (introduced GRPO)</li>
+<li><a href="https://arxiv.org/abs/2503.14476">DAPO Paper</a> - Improvements to GRPO</li>
+<li><a href="https://arxiv.org/abs/2504.14286">SRPO Paper</a> - Two-stage GRPO variant</li>
+<li><a href="https://arxiv.org/abs/2510.23027">RSPO Paper</a> - Router-shift aware optimization</li>
+</ul>
+
+
+</section>
+
+ ]]></description>
+  <category>ai</category>
+  <guid>https://rish-av.github.io/posts/2025-11-23-GSPO_GRPO/</guid>
+  <pubDate>Sun, 23 Nov 2025 07:00:00 GMT</pubDate>
+  <media:content url="https://rish-av.github.io/files/images/gspo_vs_grpo.png" medium="image" type="image/png" height="61" width="144"/>
+</item>
+<item>
+  <title>Distributed Training with JAX Simplified</title>
+  <link>https://rish-av.github.io/posts/2025-10-18-jax_distributed/</link>
+  <description><![CDATA[ 
+
+
+
+
+<section id="distributed-training-with-jax-simplified" class="level1">
+<h1>Distributed Training with JAX Simplified</h1>
+<p>Training large language models like GPT-3 (175B parameters) requires distributing computation across dozens or hundreds of GPUs. JAX makes this remarkably elegant through its functional programming paradigm and sharding primitives. However, the mental model required differs significantly from PyTorch’s imperative style. This post demystifies JAX’s distributed training by addressing the key conceptual hurdles that arise when learning the framework.</p>
+<section id="why-jax-for-distributed-training" class="level2">
+<h2 class="anchored" data-anchor-id="why-jax-for-distributed-training">Why JAX for Distributed Training?</h2>
+<p>JAX excels at distributed training for three fundamental reasons:</p>
+<p><strong>1. Functional paradigm</strong>: Parameters are data structures, not hidden object state. This makes sharding trivial—just split the data structure across devices.</p>
+<p><strong>2. Explicit state management</strong>: No global random state or hidden device placement. Everything is passed explicitly.</p>
+<p><strong>3. Automatic communication</strong>: Given sharding specifications, JAX’s compiler (XLA) figures out optimal communication patterns.</p>
+<p>For comparison:</p>
+<p><strong>PyTorch (DDP):</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># ~50+ lines of boilerplate</span></span>
+<span id="cb1-2">dist.init_process_group(backend<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'nccl'</span>)</span>
+<span id="cb1-3">rank <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> dist.get_rank()</span>
+<span id="cb1-4">model <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> DDP(model, device_ids<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>[rank])</span>
+<span id="cb1-5">sampler <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> DistributedSampler(dataset, rank<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>rank)</span>
+<span id="cb1-6"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># ... manual device management, rank checks, cleanup</span></span></code></pre></div></div>
+<p><strong>JAX:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">@jax.pmap</span></span>
+<span id="cb2-2"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> train_step(params, batch):</span>
+<span id="cb2-3">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> compute_grads(params, batch)</span></code></pre></div></div>
+</section>
+<section id="the-functional-foundation" class="level2">
+<h2 class="anchored" data-anchor-id="the-functional-foundation">The Functional Foundation</h2>
+<p>JAX’s functional approach is the first conceptual hurdle. Unlike PyTorch where parameters live inside model objects, JAX separates computation from state.</p>
+<p><strong>PyTorch:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1">model <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> Model()  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Parameters hidden inside</span></span>
+<span id="cb3-2">loss <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> model(x)  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Uses internal state</span></span>
+<span id="cb3-3">loss.backward()  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Modifies internal .grad</span></span></code></pre></div></div>
+<p><strong>JAX:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1">model <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> Model()  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Just defines computation</span></span>
+<span id="cb4-2">params <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> model.init(key, x)  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Parameters are separate data</span></span>
+<span id="cb4-3">logits <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> model.<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">apply</span>(params, x)  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Explicit parameter passing</span></span>
+<span id="cb4-4">grads <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> grad(loss_fn)(params, x)  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Explicit differentiation</span></span></code></pre></div></div>
+<p>Why does this matter? Because parameters being “just data” means you can trivially split them:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1">sharded_params <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> jax.device_put(params, sharding_spec)</span></code></pre></div></div>
+<p>No DDP wrappers, no process groups, no manual device management.</p>
+</section>
+<section id="understanding-device-mesh-the-core-abstraction" class="level2">
+<h2 class="anchored" data-anchor-id="understanding-device-mesh-the-core-abstraction">Understanding Device Mesh: The Core Abstraction</h2>
+<p>The device mesh is JAX’s fundamental abstraction for organizing GPUs. Understanding this thoroughly is critical—most confusion in JAX distributed training stems from misunderstanding the mesh.</p>
+<section id="physical-layout-vs.-logical-organization" class="level3">
+<h3 class="anchored" data-anchor-id="physical-layout-vs.-logical-organization">Physical Layout vs.&nbsp;Logical Organization</h3>
+<p>A device mesh is a multi-dimensional array of devices with <strong>named axes</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Physical: 8x8 grid = 64 GPUs</span></span>
+<span id="cb6-2">devices <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> mesh_utils.create_device_mesh((<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">8</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">8</span>))</span>
+<span id="cb6-3"></span>
+<span id="cb6-4"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Logical: Give axes semantic names</span></span>
+<span id="cb6-5">mesh <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> Mesh(devices, axis_names<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'data'</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'model'</span>))</span></code></pre></div></div>
+<p>Key insight: <strong>axis names define how work is distributed</strong>, not the physical layout.</p>
+<pre><code>        model axis (8 devices) →
+data  ┌────┬────┬────┬────┬────┬────┬────┬────┐
+axis  │ 0  │ 1  │ 2  │ 3  │ 4  │ 5  │ 6  │ 7  │
+(8)   ├────┼────┼────┼────┼────┼────┼────┼────┤
+↓     │ 8  │ 9  │ 10 │ 11 │ 12 │ 13 │ 14 │ 15 │
+      ├────┼────┼────┼────┼────┼────┼────┼────┤
+      │ ... (64 GPUs total)                    │
+      └────┴────┴────┴────┴────┴────┴────┴────┘</code></pre>
+<p>Semantics: - <strong>Same row</strong>: Process different batch slices with same model piece - <strong>Same column</strong>: Process same batch slice with different model pieces</p>
+<p>This enables hybrid parallelism: 8-way data parallelism × 8-way model parallelism = 64-way total parallelism.</p>
+</section>
+</section>
+<section id="partitionspec-mapping-tensors-to-mesh" class="level2">
+<h2 class="anchored" data-anchor-id="partitionspec-mapping-tensors-to-mesh">PartitionSpec: Mapping Tensors to Mesh</h2>
+<p><code>PartitionSpec</code> specifies tensor distribution across the mesh. The critical insight: <strong>PartitionSpec dimensions match tensor dimensions, not mesh dimensions</strong>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1">Tensor shape:      (batch<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">64</span>, seq<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2048</span>, embed<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">12288</span>)</span>
+<span id="cb8-2">PartitionSpec:     (<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'data'</span>,    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>,    <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'model'</span>)</span>
+<span id="cb8-3">                     ↑          ↑         ↑</span>
+<span id="cb8-4">                     │          │         └─ Tensor dim <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span>: use <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'model'</span> axis</span>
+<span id="cb8-5">                     │          └─────────── Tensor dim <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>: replicate</span>
+<span id="cb8-6">                     └────────────────────── Tensor dim <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>: use <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'data'</span> axis</span></code></pre></div></div>
+<p>The mesh has 2 axes, but the tensor has 3 dimensions. <strong>PartitionSpec provides 3 entries, each referencing a mesh axis name or None.</strong></p>
+<section id="example-sharding-a-3d-tensor" class="level3">
+<h3 class="anchored" data-anchor-id="example-sharding-a-3d-tensor">Example: Sharding a 3D Tensor</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1">input_batch <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> jnp.ones((<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">64</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2048</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">12288</span>))</span>
+<span id="cb9-2">spec <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> PartitionSpec(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'data'</span>, <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'model'</span>)</span>
+<span id="cb9-3"></span>
+<span id="cb9-4"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># What happens:</span></span>
+<span id="cb9-5"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># - Dim 0 (batch=64): Split 8 ways along 'data' axis → 8 per device</span></span>
+<span id="cb9-6"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># - Dim 1 (seq=2048): Replicate (all devices get full sequence)</span></span>
+<span id="cb9-7"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># - Dim 2 (embed=12288): Split 8 ways along 'model' axis → 1536 per device</span></span>
+<span id="cb9-8"></span>
+<span id="cb9-9"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Result per GPU: (8, 2048, 1536)</span></span></code></pre></div></div>
+</section>
+</section>
+<section id="memory-layout-the-hidden-complexity" class="level2">
+<h2 class="anchored" data-anchor-id="memory-layout-the-hidden-complexity">Memory Layout: The Hidden Complexity</h2>
+<p>Understanding memory layout is crucial for two reasons: correctness and performance. This is where reshape vs.&nbsp;transpose becomes important.</p>
+<section id="why-reshape-then-transpose-in-attention" class="level3">
+<h3 class="anchored" data-anchor-id="why-reshape-then-transpose-in-attention">Why Reshape Then Transpose in Attention?</h3>
+<p>In multi-head attention, we perform:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1">q <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> nn.Dense(num_heads <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> head_dim)(x)  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Shape: (batch, seq, 512)</span></span>
+<span id="cb10-2"></span>
+<span id="cb10-3">q <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> q.reshape(batch, seq, num_heads, head_dim)    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Step 1</span></span>
+<span id="cb10-4">q <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> jnp.transpose(q, (<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span>))                <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Step 2</span></span></code></pre></div></div>
+<p>Why not directly reshape to <code>(batch, num_heads, seq, head_dim)</code>?</p>
+<p><strong>Answer: Memory layout</strong>. After the Dense layer, the 512 dimensions are laid out in memory as:</p>
+<pre><code>[head0_dim0, head0_dim1, ..., head0_dim63,    # First 64: head 0
+ head1_dim0, head1_dim1, ..., head1_dim63,    # Next 64: head 1
+ ...
+ head7_dim0, head7_dim1, ..., head7_dim63]    # Last 64: head 7</code></pre>
+<p><strong>Reshape</strong> changes how we interpret the data without moving it. Reshaping to <code>(batch, seq, 8, 64)</code> naturally groups the 512 dimensions into 8 groups of 64, which matches the memory layout.</p>
+<p><strong>Transpose</strong> actually reorders data in memory. We need it to put <code>num_heads</code> before <code>seq_len</code> for efficient attention computation.</p>
+<p>Attempting to directly reshape to <code>(batch, num_heads, seq, head_dim)</code> would create a view where the data interpretation doesn’t match the underlying memory layout, resulting in incorrect groupings.</p>
+<p><strong>Key principle</strong>: Reshape operations must respect the underlying memory layout. You can only reshape in ways that maintain the contiguity of data in memory.</p>
+</section>
+</section>
+<section id="critical-mistake-wrong-sharding-for-weights" class="level2">
+<h2 class="anchored" data-anchor-id="critical-mistake-wrong-sharding-for-weights">Critical Mistake: Wrong Sharding for Weights</h2>
+<p>The most common error is applying data parallelism to model weights:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># WRONG</span></span>
+<span id="cb12-2">weight <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> jnp.ones((<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">12288</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">49152</span>))</span>
+<span id="cb12-3">spec <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> PartitionSpec(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'data'</span>, <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>)  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Split first dim on data axis</span></span></code></pre></div></div>
+<p>Let’s trace what happens in memory:</p>
+<pre><code>Weight split along 'data' axis (8 ways):
+
+Data position 0 (GPUs 0-7):   Rows 0-1535
+Data position 1 (GPUs 8-15):  Rows 1536-3071
+Data position 2 (GPUs 16-23): Rows 3072-4607
+...
+
+During training:
+- Batch slice 0 → Data position 0 → Uses weight rows 0-1535
+- Batch slice 1 → Data position 1 → Uses weight rows 1536-3071
+
+Each data replica has DIFFERENT weights = different models!
+Training is broken.</code></pre>
+<p><strong>Correct approach</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1">spec <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> PartitionSpec(<span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'model'</span>)  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Replicate rows, split columns</span></span>
+<span id="cb14-2"></span>
+<span id="cb14-3"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># All data replicas get all 12288 rows (same model)</span></span>
+<span id="cb14-4"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Columns split 8 ways: each device gets 6144 columns</span></span></code></pre></div></div>
+</section>
+<section id="when-does-batch-splitting-actually-happen" class="level2">
+<h2 class="anchored" data-anchor-id="when-does-batch-splitting-actually-happen">When Does Batch Splitting Actually Happen?</h2>
+<p>This reveals a critical insight: <strong>sharding happens at device_put time, not during computation</strong>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Original batch in CPU/main memory</span></span>
+<span id="cb15-2">batch <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> jnp.ones((<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">64</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2048</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">12288</span>))</span>
+<span id="cb15-3"></span>
+<span id="cb15-4"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Apply sharding - data is NOW physically distributed</span></span>
+<span id="cb15-5">input_spec <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> PartitionSpec(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'data'</span>, <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>, <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>)</span>
+<span id="cb15-6">sharded_batch <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> jax.device_put(batch, NamedSharding(mesh, input_spec))</span>
+<span id="cb15-7"></span>
+<span id="cb15-8"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># At this moment, batch is split across devices:</span></span>
+<span id="cb15-9"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Data position 0 → batch[0:8] on GPUs 0-7</span></span>
+<span id="cb15-10"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Data position 1 → batch[8:16] on GPUs 8-15</span></span>
+<span id="cb15-11"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># ...</span></span></code></pre></div></div>
+<p>The split happens before the forward pass. Each GPU already has its slice when computation begins. This is fundamentally different from PyTorch’s DistributedSampler which creates different batches per process.</p>
+</section>
+<section id="redundant-computation-a-subtle-pitfall" class="level2">
+<h2 class="anchored" data-anchor-id="redundant-computation-a-subtle-pitfall">Redundant Computation: A Subtle Pitfall</h2>
+<p>Consider this seemingly reasonable sharding:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1">input_spec <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> PartitionSpec(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'model'</span>, <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>, <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>)   <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Batch on model axis</span></span>
+<span id="cb16-2">weight_spec <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> PartitionSpec(<span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'model'</span>)        <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Weights on model axis</span></span></code></pre></div></div>
+<p>This is mathematically correct but computationally wasteful:</p>
+<pre><code>GPU 0:  Batch 0-7  × Weight cols 0-6143    → Result₀
+GPU 8:  Batch 0-7  × Weight cols 0-6143    → Result₀ (IDENTICAL!)
+GPU 16: Batch 0-7  × Weight cols 0-6143    → Result₀ (IDENTICAL!)
+...</code></pre>
+<p><strong>Why?</strong> Both batch and weights are split along the model axis. GPUs in the same column (same model axis position) receive: - Same batch slice (model position 0 → batch 0-7) - Same weight slice (model position 0 → cols 0-6143) - Therefore: Identical computation</p>
+<p>All GPUs in each column duplicate work. Only 12.5% of compute power is utilized (8 unique computations across 64 GPUs).</p>
+<p><strong>Solution</strong>: Orthogonal splits:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1">input_spec <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> PartitionSpec(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'data'</span>, <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>, <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>)    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Different batches per row</span></span>
+<span id="cb18-2">weight_spec <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> PartitionSpec(<span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'model'</span>)        <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Different weights per column</span></span></code></pre></div></div>
+<p>Now every GPU does unique work: 8 data replicas × 8 model pieces = true 64-way parallelism.</p>
+</section>
+<section id="complete-training-loop" class="level2">
+<h2 class="anchored" data-anchor-id="complete-training-loop">Complete Training Loop</h2>
+<p>Putting it together:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># 1. Setup mesh</span></span>
+<span id="cb19-2">devices <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> mesh_utils.create_device_mesh((<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">8</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">8</span>))</span>
+<span id="cb19-3">mesh <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> Mesh(devices, axis_names<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'data'</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'model'</span>))</span>
+<span id="cb19-4"></span>
+<span id="cb19-5"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># 2. Initialize and shard parameters</span></span>
+<span id="cb19-6">params <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> model.init(key, dummy_input)</span>
+<span id="cb19-7"></span>
+<span id="cb19-8"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> shard_param(path, param):</span>
+<span id="cb19-9">    name <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'/'</span>.join(path)</span>
+<span id="cb19-10">    </span>
+<span id="cb19-11">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Large embeddings: split vocab</span></span>
+<span id="cb19-12">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'embedding'</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">in</span> name <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">and</span> param.shape[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>] <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">10000</span>:</span>
+<span id="cb19-13">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> jax.device_put(param, NamedSharding(mesh, PartitionSpec(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'model'</span>, <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>)))</span>
+<span id="cb19-14">    </span>
+<span id="cb19-15">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Large matrices: split hidden dimension</span></span>
+<span id="cb19-16">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'kernel'</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">in</span> name <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">and</span> param.shape[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>] <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1000</span>:</span>
+<span id="cb19-17">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> jax.device_put(param, NamedSharding(mesh, PartitionSpec(<span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'model'</span>)))</span>
+<span id="cb19-18">    </span>
+<span id="cb19-19">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Small params: replicate</span></span>
+<span id="cb19-20">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> jax.device_put(param, NamedSharding(mesh, PartitionSpec()))</span>
+<span id="cb19-21"></span>
+<span id="cb19-22">sharded_params <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> jax.tree_util.tree_map_with_path(shard_param, params)</span>
+<span id="cb19-23"></span>
+<span id="cb19-24"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># 3. Training step</span></span>
+<span id="cb19-25"><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">@jax.jit</span></span>
+<span id="cb19-26"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> train_step(params, batch, opt_state):</span>
+<span id="cb19-27">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> loss_fn(params):</span>
+<span id="cb19-28">        logits <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> model.<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">apply</span>(params, batch[<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'input_ids'</span>])</span>
+<span id="cb19-29">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> cross_entropy(logits, batch[<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'labels'</span>])</span>
+<span id="cb19-30">    </span>
+<span id="cb19-31">    loss, grads <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> jax.value_and_grad(loss_fn)(params)</span>
+<span id="cb19-32">    updates, opt_state <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> optimizer.update(grads, opt_state)</span>
+<span id="cb19-33">    params <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> optax.apply_updates(params, updates)</span>
+<span id="cb19-34">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> params, opt_state, loss</span>
+<span id="cb19-35"></span>
+<span id="cb19-36"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># 4. Main loop</span></span>
+<span id="cb19-37"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> batch <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">in</span> dataloader:</span>
+<span id="cb19-38">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Shard input</span></span>
+<span id="cb19-39">    batch <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> jax.device_put(batch, NamedSharding(mesh, PartitionSpec(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'data'</span>, <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>)))</span>
+<span id="cb19-40">    </span>
+<span id="cb19-41">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Train (all communication automatic)</span></span>
+<span id="cb19-42">    sharded_params, opt_state, loss <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> train_step(sharded_params, batch, opt_state)</span></code></pre></div></div>
+</section>
+<section id="memory-calculation-for-gpt-3" class="level2">
+<h2 class="anchored" data-anchor-id="memory-calculation-for-gpt-3">Memory Calculation for GPT-3</h2>
+<p>With 8-way model parallelism on 64 A100 GPUs:</p>
+<pre><code>Total parameters: 175B
+Per device: 175B / 8 = 22B params
+
+Memory per GPU (FP16):
+- Parameters:        22B × 2 bytes = 44 GB → 11 GB (with optimizations)
+- Gradients:         Same as parameters = 11 GB
+- Optimizer (Adam):  2× parameters = 22 GB
+- Activations:       ~20 GB
+─────────────────────────────────────────
+Total: ~64 GB ✓ Fits on 80GB A100</code></pre>
+<p>Without sharding: 175B × 4 bytes = 700 GB for parameters alone. Impossible on single GPU.</p>
+</section>
+<section id="key-principles" class="level2">
+<h2 class="anchored" data-anchor-id="key-principles">Key Principles</h2>
+<ol type="1">
+<li><p><strong>JAX’s functional paradigm</strong> makes parameters explicit data structures that can be trivially split across devices.</p></li>
+<li><p><strong>Device mesh with named axes</strong> provides semantic organization. The ‘data’ axis represents different data batches, the ‘model’ axis represents different model pieces.</p></li>
+<li><p><strong>PartitionSpec dimensions match tensor dimensions</strong>, not mesh dimensions. Each entry references a named mesh axis or None.</p></li>
+<li><p><strong>Memory layout matters</strong>: Reshape operations must respect contiguous memory layout. This is why attention requires both reshape and transpose.</p></li>
+<li><p><strong>Weights use model parallelism</strong> (split along model axis), <strong>inputs use data parallelism</strong> (split along data axis). Mixing these causes either incorrect training (different models per replica) or redundant computation (wasted GPUs).</p></li>
+<li><p><strong>Sharding happens at device_put time</strong>, not during computation. Once sharded, JAX/XLA handles all communication automatically.</p></li>
+<li><p><strong>Efficiency requires orthogonal splits</strong>: batch along data axis, model along model axis. This achieves true N×M parallelism on an N×M mesh.</p></li>
+</ol>
+<p>Understanding these principles, particularly the memory layout considerations and the distinction between physical device arrangement and logical axis semantics, demystifies JAX’s sharding and reveals why it’s particularly elegant for large-scale training.</p>
+</section>
+<section id="resources" class="level2">
+<h2 class="anchored" data-anchor-id="resources">Resources</h2>
+<ul>
+<li><a href="https://jax.readthedocs.io/">JAX Documentation</a></li>
+<li><a href="https://jax.readthedocs.io/en/latest/notebooks/Distributed_arrays_and_automatic_parallelization.html">JAX Sharding Guide</a></li>
+<li><a href="https://flax.readthedocs.io/">Flax Documentation</a></li>
+</ul>
+
+
+</section>
+</section>
+
+ ]]></description>
+  <category>ai</category>
+  <guid>https://rish-av.github.io/posts/2025-10-18-jax_distributed/</guid>
+  <pubDate>Sat, 18 Oct 2025 06:00:00 GMT</pubDate>
+  <media:content url="https://rish-av.github.io/files/images/jax.png" medium="image" type="image/png" height="84" width="144"/>
+</item>
+<item>
+  <title>Real-Time Reinforcement Learning</title>
+  <link>https://rish-av.github.io/</link>
+  <description>Article on real-time reinforcement learning</description>
+  <category>ai</category>
+  <guid>https://rish-av.github.io/</guid>
+  <pubDate>Fri, 20 Jun 2025 06:00:00 GMT</pubDate>
+  <media:content url="https://rish-av.github.io/files/images/robot_cooking.png" medium="image" type="image/png" height="96" width="144"/>
+</item>
+<item>
+  <title>CUDA from Scratch - Matrix Multiplication, Memory Models, and the Road to RL Acceleration</title>
+  <link>https://rish-av.github.io/posts/2025-3-20-cudp/</link>
+  <description><![CDATA[ 
+
+
+
+
+<p>So you have been thinking about CUDA programming from a while and now want to learn but are confused how to proceed and know about memory models, etc. in CUDA. Well, even I am confused, so let’s learn together. This is the first blog of the CUDA series where the end goal is to code DQN in C and accelerate training and inference with CUDA.</p>
+<p>With AI rapidly advancing, its integration into high-stakes environments is becoming inevitable. In this landscape, efficient deployment is arguably more critical than the pace of new research. As the number of AI tools continues to grow, <strong>efficiency may well become the defining moat</strong> for the tools that endure.</p>
+<p>For nearly every use case, there’s potential to unlock significant performance gains — often by writing custom CUDA kernels tailored to the task.</p>
+<p><strong>RL lives in my heart.</strong> Thus, the end goal of this learning experience is to write a DQN completely in C and accelerate the training using CUDA kernels.</p>
+<p>So let’s go…!</p>
+<p>Let’s start off with memory organization in CUDA, then intuitively I will explain my first program: <strong>matrix multiplication in CUDA</strong>.</p>
+<section id="first-principles-memory-organization-in-cuda" class="level2">
+<h2 class="anchored" data-anchor-id="first-principles-memory-organization-in-cuda">First Principles: Memory Organization in CUDA</h2>
+<p>Before writing a single kernel, let’s zoom into the GPU’s memory layout. This is where most CUDA bugs (and performance pitfalls) are born.</p>
+<p>In CUDA, like in C/C++, <strong>matrices are stored in row-major order</strong>.</p>
+<section id="what-does-row-major-mean" class="level3">
+<h3 class="anchored" data-anchor-id="what-does-row-major-mean">What does row-major mean?</h3>
+<p>Imagine a 2D matrix:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb1-1">A <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">[[</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;"> </span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;"> </span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">],</span></span>
+<span id="cb1-2"><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">     </span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">[</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">4</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;"> </span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">5</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;"> </span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">6</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">]]</span></span></code></pre></div></div>
+<p>Even though it’s 2D logically, it’s stored in a flat 1D array as:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb2-1"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">[</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">4</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">5</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">6</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">]</span></span></code></pre></div></div>
+<p>To access the element at <code>A[row][col]</code>, the index becomes:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb3-1">index <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> row <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> numCols <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> col</span></code></pre></div></div>
+<p>For the above matrix, <code>A[1][2]</code> is <code>1*3 + 2 = 5</code>, and sure enough, <code>A[5] = 6</code>.</p>
+<p>This little indexing trick — <code>row * numCols + col</code> — is foundational. We’ll use it repeatedly in our CUDA code to compute where each value lives in memory.</p>
+</section>
+</section>
+<section id="matrix-multiplication-recap" class="level2">
+<h2 class="anchored" data-anchor-id="matrix-multiplication-recap">Matrix Multiplication Recap</h2>
+<p>We have two matrices:</p>
+<ul>
+<li>A of size <strong>M × K</strong></li>
+<li>B of size <strong>K × N</strong></li>
+</ul>
+<p>We want to compute: - C = A × B → a matrix of size <strong>M × N</strong></p>
+<p>The formula for each element of C is:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb4-1">C<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">[</span>row<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">][</span>col<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">]</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> sum over i of A<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">[</span>row<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">][</span>i<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">]</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> B<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">[</span>i<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">][</span>col<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">]</span></span></code></pre></div></div>
+<p>That’s a dot product between a row from A and a column from B.</p>
+</section>
+<section id="writing-the-cuda-kernel" class="level2">
+<h2 class="anchored" data-anchor-id="writing-the-cuda-kernel">Writing the CUDA Kernel</h2>
+<p>Here’s our minimal working kernel:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" style="background: #f1f3f5;"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb5-1">__global__ <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">void</span> matMulKernel<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">const</span> <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">float</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> A<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">const</span> <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">float</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> B<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">float</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> C<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">int</span> M<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">int</span> K<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">int</span> N<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="cb5-2">    <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">int</span> row <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> blockIdx<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>y <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> blockDim<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>y <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> threadIdx<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>y<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">;</span></span>
+<span id="cb5-3">    <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">int</span> col <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> blockIdx<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>x <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> blockDim<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>x <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> threadIdx<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>x<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">;</span></span>
+<span id="cb5-4"></span>
+<span id="cb5-5">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span>row <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&lt;</span> M <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&amp;&amp;</span> col <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&lt;</span> N<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="cb5-6">        <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">float</span> sum <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0.0</span><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">f</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">;</span></span>
+<span id="cb5-7">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">int</span> i <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">;</span> i <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&lt;</span> K<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">;</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">++</span>i<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="cb5-8">            sum <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+=</span> A<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">[</span>row <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> K <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> i<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">]</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> B<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">[</span>i <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> N <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> col<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">];</span></span>
+<span id="cb5-9">        <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span></span>
+<span id="cb5-10">        C<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">[</span>row <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> N <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> col<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">]</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> sum<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">;</span></span>
+<span id="cb5-11">    <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span></span>
+<span id="cb5-12"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span></span></code></pre></div></div>
+</section>
+<section id="thread-indexing-why-.y-for-row-and-.x-for-col" class="level2">
+<h2 class="anchored" data-anchor-id="thread-indexing-why-.y-for-row-and-.x-for-col">Thread Indexing: Why <code>.y</code> for Row and <code>.x</code> for Col?</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" style="background: #f1f3f5;"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb6-1"><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">int</span> row <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> blockIdx<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>y <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> blockDim<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>y <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> threadIdx<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>y<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">;</span></span>
+<span id="cb6-2"><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">int</span> col <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> blockIdx<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>x <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> blockDim<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>x <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> threadIdx<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>x<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">;</span></span></code></pre></div></div>
+<ul>
+<li>Threads are arranged in a <strong>2D grid</strong></li>
+<li>Each thread computes one element of the result matrix <code>C[row][col]</code></li>
+<li>Rows → vertical → <strong>Y-axis</strong></li>
+<li>Columns → horizontal → <strong>X-axis</strong></li>
+</ul>
+<p>Hence, <code>row</code> is computed using <code>.y</code> components, and <code>col</code> using <code>.x</code>.</p>
+<p>Makes your mental model clean and your code correct.</p>
+<hr>
+</section>
+<section id="memory-access-why-row-n-col" class="level2">
+<h2 class="anchored" data-anchor-id="memory-access-why-row-n-col">Memory Access: Why <code>row * N + col</code>?</h2>
+<p>This was one of the core doubts that tripped me up early on:</p>
+<blockquote class="blockquote">
+<p>“Shouldn’t it be <code>row * M + col</code> since the matrix has M rows?”</p>
+</blockquote>
+<p>Turns out — <strong>no</strong>. It’s <code>row * N + col</code> because:</p>
+<ul>
+<li>We’re accessing matrix C, which is <strong>M × N</strong></li>
+<li>Each row of C has <strong>N elements</strong></li>
+<li>So to access the start of <code>row</code>, we skip <code>row * N</code> elements</li>
+<li>Then move <code>col</code> steps in → <code>row * N + col</code></li>
+</ul>
+<p>Always remember: it’s about how <strong>many columns</strong> per row, not how many rows in total.</p>
+<hr>
+</section>
+<section id="what-about-bs-indexing-bi-n-col" class="level2">
+<h2 class="anchored" data-anchor-id="what-about-bs-indexing-bi-n-col">What about B’s indexing: <code>B[i * N + col]</code>?</h2>
+<p>Another “aha!” moment:</p>
+<blockquote class="blockquote">
+<p>“Aren’t we accessing B column-wise here? Shouldn’t it be column-major?”</p>
+</blockquote>
+<p>Good instinct — but even though we’re <em>accessing down a column</em>, we’re still treating B as <strong>row-major</strong>.</p>
+<ul>
+<li>We’re accessing <code>B[i][col]</code></li>
+<li>Since B has <strong>N columns</strong>, row-major indexing says:</li>
+</ul>
+<pre><code>B[i][col] = i * N + col</code></pre>
+<p>So <code>B[i * N + col]</code> is still perfectly valid row-major indexing, even if the access pattern feels “column-ish”.</p>
+<hr>
+</section>
+<section id="edge-case-gotcha-tiny-matrices" class="level2">
+<h2 class="anchored" data-anchor-id="edge-case-gotcha-tiny-matrices">Edge Case Gotcha: Tiny Matrices</h2>
+<p>Say we multiply:</p>
+<ul>
+<li>A = <code>[1 2 3]</code> → 1×3</li>
+<li>B = <code>[1, 2, 3]ᵗ</code> → 3×1</li>
+</ul>
+<p>The result should be:</p>
+<pre><code>1×1 = [1×1 + 2×2 + 3×3] = [14]</code></pre>
+<p>But your code might crash or give garbage. Why?</p>
+<p>Because your kernel might launch <strong>a full grid of threads</strong>, and many of them will access memory out-of-bounds.</p>
+<p>Solution:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9" style="background: #f1f3f5;"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb9-1"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span>row <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&lt;</span> M <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&amp;&amp;</span> col <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&lt;</span> N<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span></code></pre></div></div>
+<p>Always <strong>bound your threads</strong>. Especially with small matrices.</p>
+<hr>
+</section>
+<section id="test-case" class="level2">
+<h2 class="anchored" data-anchor-id="test-case">Test Case</h2>
+<p>Here’s a minimal test:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10" style="background: #f1f3f5;"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb10-1"><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">int</span> M <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> K <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> N <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">;</span></span>
+<span id="cb10-2"><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">float</span> A<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">[]</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">};</span>   <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">// 1x3</span></span>
+<span id="cb10-3"><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">float</span> B<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">[]</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">};</span>   <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">// 3x1</span></span>
+<span id="cb10-4"><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">float</span> C<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">[</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">];</span>              <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">// 1x1 output</span></span>
+<span id="cb10-5"></span>
+<span id="cb10-6"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">// Launch with grid/block of 1</span></span>
+<span id="cb10-7">dim3 blockSize<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">);</span></span>
+<span id="cb10-8">dim3 gridSize<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">);</span></span>
+<span id="cb10-9"></span>
+<span id="cb10-10"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">// Run the kernel → expect C[0] = 14</span></span></code></pre></div></div>
+<hr>
+</section>
+<section id="the-end-goal-dqn-in-pure-c-cuda" class="level2">
+<h2 class="anchored" data-anchor-id="the-end-goal-dqn-in-pure-c-cuda">The End Goal: DQN in Pure C + CUDA</h2>
+<p>This matrix multiplication was a warm-up.</p>
+<p>My goal? To build <strong>Deep Q-Networks</strong> (DQN) completely in C, and <strong>accelerate training with CUDA</strong> — no PyTorch, no TensorFlow. Just raw speed and full control.</p>
+<p>Reinforcement learning lives in my heart. And this journey is all about learning from first principles.</p>
+<hr>
+</section>
+<section id="whats-next" class="level2">
+<h2 class="anchored" data-anchor-id="whats-next">What’s Next?</h2>
+<ul>
+<li>Tiled matrix multiplication (for speed!)</li>
+<li>Shared memory optimization</li>
+<li>Writing <code>ReLU</code>, <code>Softmax</code>, <code>Linear</code> layers in CUDA</li>
+<li>Custom CUDA-based experience replay</li>
+<li>CUDA kernels for DQN forward/backward pass</li>
+</ul>
+<p>Stay tuned — this is just the start!</p>
+
+
+</section>
+
+ ]]></description>
+  <category>ai</category>
+  <guid>https://rish-av.github.io/posts/2025-3-20-cudp/</guid>
+  <pubDate>Thu, 20 Mar 2025 06:00:00 GMT</pubDate>
+  <media:content url="https://rish-av.github.io/files/images/cuda.png" medium="image" type="image/png" height="87" width="144"/>
+</item>
+<item>
+  <title>Precision Weeding in Sugarbeets - End-to-End Real-Time Computer Vision System</title>
+  <link>https://rish-av.github.io/posts/2024-12-24-spotspraying/</link>
+  <description><![CDATA[ 
+
+
+
+
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>Conventional spraying methods apply herbicides uniformly across fields, resulting in excessive chemical use, environmental risks, and increased operational costs. This project implements a precision weeding system for sugarbeet fields by combining semantic segmentation, depth sensing, and advanced model optimization techniques. The system targets only weed-infested areas, reducing herbicide usage and minimizing environmental impact.</p>
+</section>
+<section id="system-overview" class="level2">
+<h2 class="anchored" data-anchor-id="system-overview">System Overview</h2>
+<p>The system pipeline is summarized in the following flowchart:</p>
+<pre><code>RGB + Depth Images
+       │
+       ▼
+Semantic Segmentation 
+(DeepLabV3+ with Channel Attention)
+       │
+       ▼
+Depth Projection &amp; 3D Processing
+       │
+       ▼
+Field Actuation (Coordinate Transformation &amp; Control)</code></pre>
+<p>The process begins with the acquisition of synchronized RGB and depth images. It then uses semantic segmentation to distinguish sugarbeets from weeds, followed by processing to obtain 3D information. Finally, the system translates these 3D coordinates to guide precise actuation in the field.</p>
+</section>
+<section id="semantic-segmentation-with-channel-attention" class="level2">
+<h2 class="anchored" data-anchor-id="semantic-segmentation-with-channel-attention">Semantic Segmentation with Channel Attention</h2>
+<section id="overview" class="level3">
+<h3 class="anchored" data-anchor-id="overview">Overview</h3>
+<p>The segmentation network is built on a modified DeepLabV3+ architecture that classifies each pixel as sugarbeet, weed, or background. A channel attention module enhances the network’s ability to differentiate between crops and weeds, even under challenging conditions such as variable illumination, occlusions, or subtle texture differences.</p>
+</section>
+<section id="benefits-of-channel-attention" class="level3">
+<h3 class="anchored" data-anchor-id="benefits-of-channel-attention">Benefits of Channel Attention</h3>
+<ul>
+<li><p><strong>Adaptive Feature Recalibration:</strong><br>
+Global average pooling generates a channel descriptor that is then processed to produce channel-specific weights. This allows the network to emphasize important features while suppressing less informative ones.</p></li>
+<li><p><strong>Enhanced Discrimination:</strong><br>
+Recalibrated feature maps improve the network’s ability to distinguish between visually similar classes, leading to a<br>
+<img src="https://latex.codecogs.com/png.latex?%5Ctextbf%7B19%5C%25%20increase%20in%20Intersection%20over%20Union%20(IoU)%7D">.</p></li>
+<li><p><strong>Robustness to Variability:</strong><br>
+Dynamic adjustment of feature importance helps maintain consistent performance despite changes in weather, soil, or crop growth stages.</p></li>
+</ul>
+</section>
+<section id="mathematical-formulation" class="level3">
+<h3 class="anchored" data-anchor-id="mathematical-formulation">Mathematical Formulation</h3>
+<p>The channel attention module computes a channel descriptor via global average pooling:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Az_c%20=%20%5Cfrac%7B1%7D%7BH%20%5Ctimes%20W%7D%20%5Csum_%7Bi=1%7D%5E%7BH%7D%20%5Csum_%7Bj=1%7D%5E%7BW%7D%20x_c(i,j),%0A"></p>
+<p>which is transformed into channel-specific weights using:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0As%20=%20%5Csigma(W_2%20%5Ccdot%20%5Ctext%7BReLU%7D(W_1%20%5Ccdot%20z)),%0A"></p>
+<p>and applied to rescale the feature maps:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Ctilde%7Bx%7D_c%20=%20s_c%20%5Ccdot%20x_c.%0A"></p>
+</section>
+<section id="pytorch-implementation" class="level3">
+<h3 class="anchored" data-anchor-id="pytorch-implementation">PyTorch Implementation</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> torch</span>
+<span id="cb2-2"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> torch.nn <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">as</span> nn</span>
+<span id="cb2-3"></span>
+<span id="cb2-4"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">class</span> ChannelAttention(nn.Module):</span>
+<span id="cb2-5">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">__init__</span>(<span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>, in_channels, reduction<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">16</span>):</span>
+<span id="cb2-6">        <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">super</span>(ChannelAttention, <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>).<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">__init__</span>()</span>
+<span id="cb2-7">        <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.avg_pool <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> nn.AdaptiveAvgPool2d(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>)</span>
+<span id="cb2-8">        <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.fc <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> nn.Sequential(</span>
+<span id="cb2-9">            nn.Linear(in_channels, in_channels <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">//</span> reduction, bias<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">False</span>),</span>
+<span id="cb2-10">            nn.ReLU(inplace<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">True</span>),</span>
+<span id="cb2-11">            nn.Linear(in_channels <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">//</span> reduction, in_channels, bias<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">False</span>),</span>
+<span id="cb2-12">            nn.Sigmoid()</span>
+<span id="cb2-13">        )</span>
+<span id="cb2-14">    </span>
+<span id="cb2-15">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> forward(<span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>, x):</span>
+<span id="cb2-16">        b, c, _, _ <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> x.size()</span>
+<span id="cb2-17">        y <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.avg_pool(x).view(b, c)</span>
+<span id="cb2-18">        y <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.fc(y).view(b, c, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>)</span>
+<span id="cb2-19">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> x <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> y</span></code></pre></div></div>
+</section>
+</section>
+<section id="real-time-deployment-and-model-optimization" class="level2">
+<h2 class="anchored" data-anchor-id="real-time-deployment-and-model-optimization">Real-Time Deployment and Model Optimization</h2>
+<section id="embedded-system-architecture" class="level3">
+<h3 class="anchored" data-anchor-id="embedded-system-architecture">Embedded System Architecture</h3>
+<p>Due to remote field conditions and limited internet connectivity, the entire inference pipeline is implemented in C++ and deployed on an NXP i.MX8 board running Yocto Linux with a Hailo-8 accelerator. <strong>libtorch</strong> is used to integrate the PyTorch models into the C++ environment, ensuring seamless execution in the field.</p>
+</section>
+<section id="model-optimization-techniques" class="level3">
+<h3 class="anchored" data-anchor-id="model-optimization-techniques">Model Optimization Techniques</h3>
+<ul>
+<li><p><strong>INT8 Quantization:</strong><br>
+The model is optimized for real-time performance using INT8 precision. This involves:</p>
+<ul>
+<li><p><strong>Dynamic Quantization:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> torch.quantization <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">as</span> quant</span>
+<span id="cb3-2"></span>
+<span id="cb3-3">model_fp32 <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> CustomSegNet(num_classes<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span>)</span>
+<span id="cb3-4">model_int8 <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> quant.quantize_dynamic(model_fp32, {nn.Conv2d, nn.Linear}, dtype<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>torch.qint8)</span></code></pre></div></div></li>
+<li><p><strong>Quantization Aware Training (QAT):</strong><br>
+During QAT, fake quantization layers simulate INT8 precision. The activation quantization function is defined as:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Chat%7Bx%7D%20=%20Q(x)%20=%20s%20%5Ccdot%20%5Ctext%7Bclip%7D%5Cleft(%5Cleft%5Clfloor%20%5Cfrac%7Bx%7D%7Bs%7D%20%5Cright%5Crceil,%20-q_%7B%5Cmin%7D,%20q_%7B%5Cmax%7D%5Cright),%0A"></p>
+<p>where <img src="https://latex.codecogs.com/png.latex?s"> is the scale factor and <img src="https://latex.codecogs.com/png.latex?%5Clfloor%20%5Ccdot%20%5Crceil"> denotes rounding. The gradient is approximated via:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cfrac%7B%5Cpartial%20L%7D%7B%5Cpartial%20x%7D%20%5Capprox%20%5Cfrac%7B%5Cpartial%20L%7D%7B%5Cpartial%20%5Chat%7Bx%7D%7D.%0A"></p>
+<p>The optimal scale <img src="https://latex.codecogs.com/png.latex?s%5E*"> minimizes the Kullback-Leibler divergence between the full-precision gradient distribution <img src="https://latex.codecogs.com/png.latex?P(g)"> and the quantized distribution <img src="https://latex.codecogs.com/png.latex?Q(g;%20s)">:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0As%5E*%20=%20%5Carg%5Cmin_%7Bs%7D%20%5C,%20%5Cmathrm%7BKL%7D(P(g)%20%5Cparallel%20Q(g;%20s))%20=%20%5Carg%5Cmin_%7Bs%7D%20%5Csum_%7Bi%7D%20P(g_i)%20%5Clog%20%5Cfrac%7BP(g_i)%7D%7BQ(g_i;%20s)%7D.%0A"></p></li>
+</ul></li>
+<li><p><strong>Model Freezing and Tracing:</strong><br>
+The optimized model is frozen and traced using <strong>libtorch</strong>, resulting in a static computation graph that is exported to the ONNX format:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> torch</span>
+<span id="cb4-2"></span>
+<span id="cb4-3">model.<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">eval</span>()  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Freeze layers like batch normalization and dropout</span></span>
+<span id="cb4-4">example_input <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> torch.randn(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">512</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">512</span>)</span>
+<span id="cb4-5">traced_model <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> torch.jit.trace(model, example_input)</span>
+<span id="cb4-6">traced_model.save(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"model_traced.pt"</span>)</span>
+<span id="cb4-7"></span>
+<span id="cb4-8">torch.onnx.export(</span>
+<span id="cb4-9">    model, </span>
+<span id="cb4-10">    example_input, </span>
+<span id="cb4-11">    <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"model_int8.onnx"</span>, </span>
+<span id="cb4-12">    export_params<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">True</span>,</span>
+<span id="cb4-13">    opset_version<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">11</span>,</span>
+<span id="cb4-14">    do_constant_folding<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">True</span>,</span>
+<span id="cb4-15">    input_names<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>[<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'input'</span>],</span>
+<span id="cb4-16">    output_names<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>[<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'output'</span>]</span>
+<span id="cb4-17">)</span></code></pre></div></div></li>
+<li><p><strong>Integration with Hailo AI:</strong><br>
+The traced ONNX model is integrated into the C++ inference pipeline and executed using the Hailo AI inference server, providing optimized INT8 performance for real-time processing.</p></li>
+</ul>
+</section>
+</section>
+<section id="field-actuation-and-3d-processing" class="level2">
+<h2 class="anchored" data-anchor-id="field-actuation-and-3d-processing">Field Actuation and 3D Processing</h2>
+<p>After real-time inference, the system must translate the segmentation output into actionable data for field actuation. This section integrates depth projection, 3D localization, and coordinate transformation.</p>
+<section id="depth-projection-and-3d-localization" class="level3">
+<h3 class="anchored" data-anchor-id="depth-projection-and-3d-localization">Depth Projection and 3D Localization</h3>
+<p>The 2D segmentation mask is projected into 3D space using the intrinsic camera matrix <img src="https://latex.codecogs.com/png.latex?K">:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cbegin%7Bbmatrix%7D%0AX%20%5C%5C%0AY%20%5C%5C%0AZ%0A%5Cend%7Bbmatrix%7D%20=%20d(u,v)%20%5Ccdot%20K%5E%7B-1%7D%0A%5Cbegin%7Bbmatrix%7D%0Au%20%5C%5C%0Av%20%5C%5C%0A1%0A%5Cend%7Bbmatrix%7D,%0A"></p>
+<p>where <img src="https://latex.codecogs.com/png.latex?d(u,v)"> represents the depth at pixel <img src="https://latex.codecogs.com/png.latex?(u,v)">. Clustering the resulting 3D points enables the estimation of weed density and the computation of average spatial coordinates for each weed cluster.</p>
+</section>
+<section id="coordinate-transformation-for-field-actuation" class="level3">
+<h3 class="anchored" data-anchor-id="coordinate-transformation-for-field-actuation">Coordinate Transformation for Field Actuation</h3>
+<p>To accurately guide the mechanical weeding nib, the computed 3D coordinates (initially defined in the camera frame) must be transformed into the machine’s coordinate system. This alignment is performed using a pre-computed transformation matrix.</p>
+<section id="c-implementation" class="level4">
+<h4 class="anchored" data-anchor-id="c-implementation">C++ Implementation</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" style="background: #f1f3f5;"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb5-1"><span class="pp" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">#include </span><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">&lt;Eigen/Dense&gt;</span></span>
+<span id="cb5-2"></span>
+<span id="cb5-3">Eigen<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">::</span>Matrix4f getTransformMatrix<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">();</span>  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">// Retrieves the transformation matrix</span></span>
+<span id="cb5-4"></span>
+<span id="cb5-5">Eigen<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">::</span>Vector4f getPlantCoordinates<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">float</span> x<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">float</span> y<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dt" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">float</span> z<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="cb5-6">    Eigen<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">::</span>Matrix4f camToActuator <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> getTransformMatrix<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">();</span></span>
+<span id="cb5-7">    Eigen<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">::</span>Vector4f plantCoordCam<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span>x<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> y<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> z<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">);</span></span>
+<span id="cb5-8">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> camToActuator <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> plantCoordCam<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">;</span></span>
+<span id="cb5-9"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span></span></code></pre></div></div>
+<p>This transformation ensures that the machine’s location in the field is accurately adjusted for effective actuation.</p>
+</section>
+</section>
+</section>
+<section id="weedicide-usage-calculation-and-motivation" class="level2">
+<h2 class="anchored" data-anchor-id="weedicide-usage-calculation-and-motivation">Weedicide Usage Calculation and Motivation</h2>
+<section id="why-precision-spot-spraying" class="level3">
+<h3 class="anchored" data-anchor-id="why-precision-spot-spraying">Why Precision Spot Spraying?</h3>
+<p>Conventional systems apply herbicides uniformly, often wasting chemicals and affecting non-target crops. By precisely identifying weed-infested areas using real-time semantic segmentation and depth estimation, the system applies herbicides only where necessary, reducing chemical waste and environmental impact.</p>
+</section>
+<section id="calculating-weedicide-requirements" class="level3">
+<h3 class="anchored" data-anchor-id="calculating-weedicide-requirements">Calculating Weedicide Requirements</h3>
+<ol type="1">
+<li><p><strong>Segmentation Map <img src="https://latex.codecogs.com/png.latex?S(u,v)">:</strong></p>
+<p><img src="https://latex.codecogs.com/png.latex?%0AS(u,v)%20=%0A%5Cbegin%7Bcases%7D%0A1,%20&amp;%20%5Ctext%7Bif%20pixel%20%7D%20(u,v)%20%5Ctext%7B%20is%20classified%20as%20weed%7D%20%5C%5C%0A0,%20&amp;%20%5Ctext%7Botherwise%7D%0A%5Cend%7Bcases%7D%0A"></p></li>
+<li><p><strong>Real-World Area Calculation:</strong><br>
+The area corresponding to a pixel is approximated by:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0AA_%7Bpixel%7D(u,v)%20=%20%5Cleft(%5Cfrac%7Bd(u,v)%7D%7Bf%7D%5Cright)%5E2,%0A"></p>
+<p>where <img src="https://latex.codecogs.com/png.latex?d(u,v)"> is the depth at pixel <img src="https://latex.codecogs.com/png.latex?(u,v)"> and <img src="https://latex.codecogs.com/png.latex?f"> is the focal length.</p></li>
+<li><p><strong>Total Weed-Covered Area <img src="https://latex.codecogs.com/png.latex?A_w">:</strong></p>
+<p><img src="https://latex.codecogs.com/png.latex?%0AA_w%20=%20%5Csum_%7Bu,v%7D%20S(u,v)%20%5Ccdot%20%5Cleft(%5Cfrac%7Bd(u,v)%7D%7Bf%7D%5Cright)%5E2.%0A"></p></li>
+<li><p><strong>Herbicide Amount:</strong><br>
+Given <img src="https://latex.codecogs.com/png.latex?%5Cbeta"> as the application rate (liters per square meter), the total herbicide required is:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Ctext%7BWeedicide%20Amount%7D%20=%20%5Cbeta%20%5Ccdot%20A_w.%0A"></p></li>
+</ol>
+<p>This calculation guarantees that herbicide is applied only where needed.</p>
+</section>
+</section>
+<section id="key-results" class="level2">
+<h2 class="anchored" data-anchor-id="key-results">Key Results</h2>
+<ul>
+<li><p><strong>Improved Segmentation Accuracy:</strong><br>
+Integration of the channel attention module resulted in a<br>
+<img src="https://latex.codecogs.com/png.latex?%5Ctextbf%7B19%5C%25%20increase%20in%20IoU%7D">.</p></li>
+<li><p><strong>Enhanced Processing Speed:</strong><br>
+Optimizations increased the frame rate from <strong>1.3 fps to 32 fps</strong> on the NVIDIA Xavier AGX platform.</p></li>
+<li><p><strong>Real-Time Deployment:</strong><br>
+The embedded system on an NXP board achieved <strong>23 fps</strong> with INT8 quantization.</p></li>
+</ul>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<p>This project demonstrates a comprehensive approach to precision weeding in sugarbeet fields. By combining advanced semantic segmentation with robust model optimizations and efficient embedded deployment, the system offers a scalable solution for targeted weed treatment. The integrated field actuation module—comprising depth projection, 3D localization, and coordinate transformation—ensures that the machine’s location is accurately adjusted for precise herbicide application. This method not only reduces herbicide waste and environmental impact but also offers significant cost savings and improved operational efficiency—key benefits for modern precision agriculture.</p>
+
+
+</section>
+
+ ]]></description>
+  <category>ai</category>
+  <guid>https://rish-av.github.io/posts/2024-12-24-spotspraying/</guid>
+  <pubDate>Tue, 24 Dec 2024 07:00:00 GMT</pubDate>
+  <media:content url="https://rish-av.github.io/files/images/spot_spraying.png" medium="image" type="image/png" height="78" width="144"/>
+</item>
+</channel>
+</rss>

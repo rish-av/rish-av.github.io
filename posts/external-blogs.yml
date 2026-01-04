@@ -1,0 +1,8 @@
+- path: https://mila.quebec/en/article/real-time-reinforcement-learning
+  image: /files/images/robot_cooking.png
+  title: "Real-Time Reinforcement Learning"
+  author: "Ivan Anokhin, Matthew Riemer, Rishav, Gopeshh Subbaraj, Glen Berseth"
+  description: "Article on real-time reinforcement learning"
+  date: "2025-06-20"
+  categories: [ai]
+  pin: true

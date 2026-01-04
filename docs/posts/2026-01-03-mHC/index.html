@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Rishav">
+<meta name="dcterms.date" content="2026-01-03">
+<meta name="description" content="Rishav’s personal website. Graduate researcher at Mila researching reliable machine learning systems. Interests in RL, mechanistic interpretability, and real-time systems. Blog on AI, coffee, and mountains.">
+
+<title>The Identity Crisis: How DeepSeek Fixed the Flaw in Hyper-Connections – Rishav</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-3e8f12d1b5c8d04d32925f9f9ead600c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-1ZTF5BQFYQ"></script>
+
+<script type="text/javascript">
+
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-1ZTF5BQFYQ', { 'anonymize_ip': true});
+</script>
+
+<!-- 
+Load Academicons v1: https://jpswalsh.github.io/academicons/
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+
+<!---
+The following code are needed to show dimension citation and altmetrics.
+https://api.altmetric.com/embeds.html
+https://badge.dimensions.ai/
+--->
+
+<script type="text/javascript" src="https://d1bxh8uas1mnw7.cloudfront.net/assets/embed.js"></script>
+
+<script async="" src="https://badge.dimensions.ai/badge.js" charset="utf-8"></script>
+
+<script type="text/javascript" src="//cdn.plu.mx/widget-popup.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../custom-pin.css">
+<meta property="og:title" content="The Identity Crisis: How DeepSeek Fixed the Flaw in Hyper-Connections – Rishav">
+<meta property="og:description" content="mHC">
+<meta property="og:image" content="https://rish-av.github.io/files/images/combined.png">
+<meta property="og:site_name" content="Rishav">
+<meta property="og:image:height" content="728">
+<meta property="og:image:width" content="1414">
+<meta name="twitter:title" content="The Identity Crisis: How DeepSeek Fixed the Flaw in Hyper-Connections – Rishav">
+<meta name="twitter:description" content="mHC">
+<meta name="twitter:image" content="https://rish-av.github.io/files/images/combined.png">
+<meta name="twitter:image-height" content="728">
+<meta name="twitter:image-width" content="1414">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Rishav</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../posts.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../projects.html"> 
+<span class="menu-text">Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../publications.html"> 
+<span class="menu-text">Publications</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/rish-av" target="_blank"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://twitter.com/rishav_real" target="_blank"> <i class="bi bi-twitter" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://linkedin.com/in/rishvv" target="_blank"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Toggle reader mode">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#part-1-the-golden-rule-of-deep-learning" id="toc-part-1-the-golden-rule-of-deep-learning" class="nav-link active" data-scroll-target="#part-1-the-golden-rule-of-deep-learning">Part 1: The Golden Rule of Deep Learning</a>
+  <ul class="collapse">
+  <li><a href="#why-is-this-critical" id="toc-why-is-this-critical" class="nav-link" data-scroll-target="#why-is-this-critical">Why is this critical?</a></li>
+  </ul></li>
+  <li><a href="#part-2-the-innovation---hyper-connections-hc" id="toc-part-2-the-innovation---hyper-connections-hc" class="nav-link" data-scroll-target="#part-2-the-innovation---hyper-connections-hc">Part 2: The Innovation - Hyper-Connections (HC)</a>
+  <ul class="collapse">
+  <li><a href="#understanding-the-dimensions" id="toc-understanding-the-dimensions" class="nav-link" data-scroll-target="#understanding-the-dimensions">Understanding the Dimensions</a></li>
+  </ul></li>
+  <li><a href="#part-3-the-problem---the-crash" id="toc-part-3-the-problem---the-crash" class="nav-link" data-scroll-target="#part-3-the-problem---the-crash">Part 3: The Problem - The Crash</a>
+  <ul class="collapse">
+  <li><a href="#visualizing-the-failure" id="toc-visualizing-the-failure" class="nav-link" data-scroll-target="#visualizing-the-failure">Visualizing the Failure</a></li>
+  </ul></li>
+  <li><a href="#part-4-the-rules-of-the-road-the-math" id="toc-part-4-the-rules-of-the-road-the-math" class="nav-link" data-scroll-target="#part-4-the-rules-of-the-road-the-math">Part 4: The Rules of the Road (The Math)</a>
+  <ul class="collapse">
+  <li><a href="#rule-1-row-stochasticity" id="toc-rule-1-row-stochasticity" class="nav-link" data-scroll-target="#rule-1-row-stochasticity">Rule 1: Row Stochasticity</a></li>
+  <li><a href="#rule-2-column-stochasticity" id="toc-rule-2-column-stochasticity" class="nav-link" data-scroll-target="#rule-2-column-stochasticity">Rule 2: Column Stochasticity</a></li>
+  <li><a href="#the-mathematical-guarantee-conservation-properties" id="toc-the-mathematical-guarantee-conservation-properties" class="nav-link" data-scroll-target="#the-mathematical-guarantee-conservation-properties">The Mathematical Guarantee: Conservation Properties</a></li>
+  <li><a href="#the-enforcer-sinkhorn-knopp" id="toc-the-enforcer-sinkhorn-knopp" class="nav-link" data-scroll-target="#the-enforcer-sinkhorn-knopp">The Enforcer: Sinkhorn-Knopp</a></li>
+  </ul></li>
+  <li><a href="#this-is-the-before-and-after-of-manifold-constraints---transforming-chaos-into-controlled-stable-mixing." id="toc-this-is-the-before-and-after-of-manifold-constraints---transforming-chaos-into-controlled-stable-mixing." class="nav-link" data-scroll-target="#this-is-the-before-and-after-of-manifold-constraints---transforming-chaos-into-controlled-stable-mixing.">This is the “before and after” of manifold constraints - transforming chaos into controlled, stable mixing.</a></li>
+  <li><a href="#part-5-cheating-the-memory-wall" id="toc-part-5-cheating-the-memory-wall" class="nav-link" data-scroll-target="#part-5-cheating-the-memory-wall">Part 5: Cheating the Memory Wall</a>
+  <ul class="collapse">
+  <li><a href="#quantifying-the-cost" id="toc-quantifying-the-cost" class="nav-link" data-scroll-target="#quantifying-the-cost">Quantifying the Cost</a></li>
+  <li><a href="#why-is-mhc-memory-heavy-but-compute-light" id="toc-why-is-mhc-memory-heavy-but-compute-light" class="nav-link" data-scroll-target="#why-is-mhc-memory-heavy-but-compute-light">Why is mHC Memory-Heavy but Compute-Light?</a></li>
+  <li><a href="#solution-1-kernel-fusion-the-countertop-strategy" id="toc-solution-1-kernel-fusion-the-countertop-strategy" class="nav-link" data-scroll-target="#solution-1-kernel-fusion-the-countertop-strategy">Solution 1: Kernel Fusion (The “Countertop” Strategy)</a></li>
+  <li><a href="#solution-2-selective-recomputing-the-salt-trick" id="toc-solution-2-selective-recomputing-the-salt-trick" class="nav-link" data-scroll-target="#solution-2-selective-recomputing-the-salt-trick">Solution 2: Selective Recomputing (The “Salt” Trick)</a></li>
+  </ul></li>
+  <li><a href="#part-6-from-theory-to-code" id="toc-part-6-from-theory-to-code" class="nav-link" data-scroll-target="#part-6-from-theory-to-code">Part 6: From Theory to Code</a></li>
+  <li><a href="#part-7-so-where-are-we" id="toc-part-7-so-where-are-we" class="nav-link" data-scroll-target="#part-7-so-where-are-we">Part 7: So where are we?</a>
+  <ul class="collapse">
+  <li><a href="#the-rocket-launch-confirmed" id="toc-the-rocket-launch-confirmed" class="nav-link" data-scroll-target="#the-rocket-launch-confirmed">The “Rocket Launch” Confirmed</a></li>
+  <li><a href="#stability-at-scale" id="toc-stability-at-scale" class="nav-link" data-scroll-target="#stability-at-scale">Stability at Scale</a></li>
+  <li><a href="#the-cost-of-safety" id="toc-the-cost-of-safety" class="nav-link" data-scroll-target="#the-cost-of-safety">The Cost of Safety</a></li>
+  <li><a href="#performance-on-real-benchmarks" id="toc-performance-on-real-benchmarks" class="nav-link" data-scroll-target="#performance-on-real-benchmarks">Performance on Real Benchmarks</a></li>
+  </ul></li>
+  <li><a href="#part-8-open-questions" id="toc-part-8-open-questions" class="nav-link" data-scroll-target="#part-8-open-questions">Part 8: Open Questions</a>
+  <ul class="collapse">
+  <li><a href="#alternative-manifolds-a-brief-history" id="toc-alternative-manifolds-a-brief-history" class="nav-link" data-scroll-target="#alternative-manifolds-a-brief-history">Alternative Manifolds: A Brief History</a></li>
+  <li><a href="#efficiency-questions" id="toc-efficiency-questions" class="nav-link" data-scroll-target="#efficiency-questions">Efficiency Questions</a></li>
+  </ul></li>
+  <li><a href="#conclusion-the-physics-of-the-signal" id="toc-conclusion-the-physics-of-the-signal" class="nav-link" data-scroll-target="#conclusion-the-physics-of-the-signal">Conclusion: The Physics of the Signal</a></li>
+  <li><a href="#references-further-reading" id="toc-references-further-reading" class="nav-link" data-scroll-target="#references-further-reading">References &amp; Further Reading</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">The Identity Crisis: How DeepSeek Fixed the Flaw in Hyper-Connections</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">ai</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    mHC
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 3, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="part-1-the-golden-rule-of-deep-learning" class="level2">
+<h2 class="anchored" data-anchor-id="part-1-the-golden-rule-of-deep-learning">Part 1: The Golden Rule of Deep Learning</h2>
+<p>In the world of Deep Learning, we have a “Golden Rule” that has allowed models to evolve from the image classifiers of 2015 to the reasoning giants of today: the <strong>Identity Mapping</strong>. For a very long time, this was seen a standard which did not need any further engineering but DeepSeek’s team begs to differ here.</p>
+<p>Think of a standard Residual Network (ResNet) as a single-lane highway. The “Identity Mapping” is the rule that allows traffic (information) to flow straight through from start to finish without stopping. Mathematically, we express this as:</p>
+<p><span class="math display">\[x_{l+1} = x_l + F(x_l, W_l)\]</span></p>
+<p><img src="../../files/images/combined.png" class="img-fluid" style="width:100.0%" alt="Architecture Variants"> <em>Figure 1(a-c) from the paper - shows residual connection, HC architecture, and mHC architecture</em></p>
+<section id="why-is-this-critical" class="level3">
+<h3 class="anchored" data-anchor-id="why-is-this-critical">Why is this critical?</h3>
+<p>This simple addition was a key enabler in scaling deep networks. The identity mapping allows gradients to flow cleanly through hundreds of layers, which became essential as architectures grew from models like <strong>ResNet-50</strong> (~25 million parameters) to modern LLMs with hundreds of billions of parameters.</p>
+<p><strong>The Physics:</strong> During training, when the model looks backward to learn (backpropagation), the gradient flows through the identity path (the <code>x_l</code> term) without any modification, ensuring the signal doesn’t vanish or explode, even after traveling through hundreds of layers.</p>
+<p><strong>Concrete Example:</strong> Imagine you’re training a 100-layer network. During backpropagation, gradients need to flow from layer 100 back to layer 1. Without the identity mapping, each layer might multiply the gradient by some value like 0.9. After 100 layers: 0.9^100 ≈ 0.0000266. Your gradient has essentially <strong>vanished</strong> - the early layers can’t learn anything. With the identity mapping, there’s always a direct gradient path back to early layers, preserving the signal.</p>
+<hr>
+</section>
+</section>
+<section id="part-2-the-innovation---hyper-connections-hc" class="level2">
+<h2 class="anchored" data-anchor-id="part-2-the-innovation---hyper-connections-hc">Part 2: The Innovation - Hyper-Connections (HC)</h2>
+<p>Recent research introduced “Hyper-Connections” (HC) to upgrade this highway. HC widens the road by an expansion rate of <code>n</code> (typically <code>n=4</code>).</p>
+<section id="understanding-the-dimensions" class="level3">
+<h3 class="anchored" data-anchor-id="understanding-the-dimensions">Understanding the Dimensions</h3>
+<p>It’s important to visualize this correctly. We aren’t just making the single vector 4 times longer. Instead, we are building <strong>4 parallel streams</strong> (lanes) that run side-by-side.</p>
+<p><strong>Standard:</strong> 1 Stream of size <code>d</code> (e.g., 4096)</p>
+<p><strong>HC (n=4):</strong> 4 Streams, each of size <code>d</code></p>
+<p><span class="math display">\[M^{(t)} = T_r(T_c(M^{(t-1)}))\]</span></p>
+<p><strong>Intuition:</strong> Think of it like having 4 different “perspectives” on the same information. One stream might specialize in syntax, another in semantics, a third in world knowledge, and the fourth in reasoning patterns. By having these parallel streams, the model can maintain multiple specialized representations simultaneously. (See Figure 1(b) above)</p>
+<p>HC builds complex interchanges to mix the traffic between these lanes:</p>
+<p><span class="math display">\[\prod_{i=1}^{100} H^{res}_{100-i} \text{ is ALSO doubly stochastic}\]</span></p>
+<p>Where:</p>
+<ul>
+<li><strong>reads</strong>: <span class="math inline">\(H^{pre}_l \in \mathbb{R}^{1 \times n}\)</span> reads from the streams into the layer (aggregates 4 streams → 1 input)</li>
+<li><strong>writes</strong>: <span class="math inline">\(H^{post}_l \in \mathbb{R}^{1 \times n}\)</span> writes the layer output back to the streams (distributes 1 output → 4 streams)</li>
+<li><strong>mixes</strong>: <span class="math inline">\(H^{res}_l \in \mathbb{R}^{n \times n}\)</span> mixes information between the parallel streams (4 streams → 4 streams)</li>
+</ul>
+<p><strong>Concrete Example of Mixing:</strong> Suppose stream 1 contains grammatical information and stream 2 contains semantic information. The mixing matrix <span class="math inline">\(H^{res}_l\)</span> might have learned that for certain tasks, you need 70% grammar + 30% semantics in the first output stream, and 20% grammar + 80% semantics in the second output stream. This is what “mixing” means - creating weighted combinations of the specialized streams.</p>
+<p>This diversification drastically increases the model’s capacity to learn and reason by allowing different “lanes” to specialize in different features.</p>
+<hr>
+</section>
+</section>
+<section id="part-3-the-problem---the-crash" class="level2">
+<h2 class="anchored" data-anchor-id="part-3-the-problem---the-crash">Part 3: The Problem - The Crash</h2>
+<p>But there was a catch. HC removed the traffic rules. Without the safety of the Identity Mapping, the mixing matrices could arbitrarily multiply the signal strength.</p>
+<section id="visualizing-the-failure" class="level3">
+<h3 class="anchored" data-anchor-id="visualizing-the-failure">Visualizing the Failure</h3>
+<p>Imagine a graph where the X-axis is the <strong>Layer Number</strong> (Depth) and the Y-axis is the <strong>Signal Variance</strong> (Energy).</p>
+<p><strong>Stable ResNet:</strong> The line is flat. The energy stays constant at 1.0 from Layer 1 to Layer 100, effectively following the “speed limit.”</p>
+<p><strong>Unstable HC:</strong> The line looks like an exponential <strong>“rocket launch.”</strong> It starts small, but the compound effect causes it to explode.</p>
+<p><strong>The Math Behind the Explosion:</strong> In standard ResNet, after 100 layers you have:</p>
+<p><span class="math display">\[\|H^{res}_l x\|_2 \leq \|x\|_2\]</span></p>
+<p>The <code>x_0</code> term is unchanged - it’s literally the same vector that entered layer 0.</p>
+<p>In HC, after 100 layers you have:</p>
+<p><span class="math display">\[\mathcal{M}_{res} = \{H^{res}_l \in \mathbb{R}^{n \times n} \mid H^{res}_l \mathbf{1}_n = \mathbf{1}_n, \mathbf{1}_n^T H^{res}_l = \mathbf{1}_n^T, H^{res}_l \geq 0\}\]</span></p>
+<p>That product of 100 matrices is the problem. Even if each <code>H^{res}_l</code> has a maximum eigenvalue of just 1.02 (only 2% above unity), after 100 layers: 1.02^100 ≈ 7.24. <strong>Your signal has amplified by 7×!</strong> And with uncontrolled matrices, you might see eigenvalues of 1.1 or higher, leading to: 1.1^100 ≈ 13,780 - complete explosion.</p>
+<p><img src="../../files/images/figure3.png" class="img-fluid" style="width:100.0%" alt="HC Instability"> <em>Figure 3 from the paper - shows the dramatic explosion in gradient magnitude for HC reaching nearly 10^4</em></p>
+<p><img src="../../files/images/figure2.png" class="img-fluid" style="width:100.0%" alt="Training Loss Instability"> <em>Figure 2 from the paper - shows the training instability and loss spikes in HC</em></p>
+<p><strong>Why This Breaks Training:</strong> When gradients explode to magnitudes of 10^4, the optimizer (Adam, SGD, etc.) receives nonsensical update signals. It’s like trying to park a car when the speedometer randomly jumps between 5 mph and 5,000 mph - you have no reliable information to make good decisions.</p>
+<hr>
+</section>
+</section>
+<section id="part-4-the-rules-of-the-road-the-math" class="level2">
+<h2 class="anchored" data-anchor-id="part-4-the-rules-of-the-road-the-math">Part 4: The Rules of the Road (The Math)</h2>
+<p>To fix the instability caused by Hyper-Connections, the authors had to impose strict “traffic rules” on the mixing matrices. They restrict <span class="math inline">\(H^{res}_l\)</span> to the <strong>Birkhoff Polytope</strong> (<span class="math inline">\(\mathcal{M}_{res}\)</span>), the geometric set of all <strong>Doubly Stochastic</strong> matrices:</p>
+<p><span class="math display">\[x_100 = \left(\prod_{i=1}^{100} H^{res}_{100-i}\right) x_0 + ...\]</span></p>
+<p>Where <span class="math inline">\(\mathbf{1}_n\)</span> is a column vector of ones. While this looks abstract, it translates to two simple physical rules:</p>
+<section id="rule-1-row-stochasticity" class="level3">
+<h3 class="anchored" data-anchor-id="rule-1-row-stochasticity">Rule 1: Row Stochasticity</h3>
+<p><span class="math display">\[H^{res}_l \mathbf{1}_n = \mathbf{1}_n\]</span></p>
+<p><strong>The sum of weights for each outgoing stream is exactly 1.</strong></p>
+<p><strong>What this means:</strong> Imagine you have 100 “units of energy” in stream 1. Row stochasticity says: “You can redistribute this energy to streams 1, 2, 3, 4 in any proportion you want (e.g., 25% to each, or 70% to stream 1 and 10% to each of the others), BUT the total output must still be 100 units.” You cannot create energy out of nowhere.</p>
+<p><strong>Example:</strong></p>
+<pre><code>Stream 1 (100 units) → [0.7×100 → Stream 1, 0.1×100 → Stream 2, 
+                         0.1×100 → Stream 3, 0.1×100 → Stream 4]
+Total output = 70 + 10 + 10 + 10 = 100 units</code></pre>
+<p>This prevents the “Rocket Launch” effect by ensuring the total signal energy cannot be amplified.</p>
+</section>
+<section id="rule-2-column-stochasticity" class="level3">
+<h3 class="anchored" data-anchor-id="rule-2-column-stochasticity">Rule 2: Column Stochasticity</h3>
+<p><span class="math display">\[\mathbf{1}_n^T H^{res}_l = \mathbf{1}_n^T\]</span></p>
+<p><strong>The sum of weights for each incoming stream is exactly 1.</strong></p>
+<p><strong>What this means:</strong> For any output stream, the contributions from all input streams must sum to exactly 1. This ensures every input feature is fully utilized and not “lost.”</p>
+<p><strong>Example:</strong></p>
+<pre><code>Output Stream 1 receives:
+  0.4 from Input Stream 1
+  0.3 from Input Stream 2
+  0.2 from Input Stream 3
+  0.1 from Input Stream 4
+Total = 0.4 + 0.3 + 0.2 + 0.1 = 1.0</code></pre>
+<p>This prevents vanishing gradients by ensuring no stream is “forgotten” or “zeroed out.”</p>
+</section>
+<section id="the-mathematical-guarantee-conservation-properties" class="level3">
+<h3 class="anchored" data-anchor-id="the-mathematical-guarantee-conservation-properties">The Mathematical Guarantee: Conservation Properties</h3>
+<p>When a matrix is doubly stochastic, it provides powerful conservation guarantees. The result is a <strong>convex combination</strong> - a weighted average where the weights sum to 1.</p>
+<p><strong>Why this matters:</strong></p>
+<p><span class="math display">\[\|H^{res}_l x\|_1 = \|x\|_1\]</span></p>
+<p>Doubly stochastic matrices <strong>exactly preserve</strong> the 1-norm (sum of absolute values) of any vector. This is stronger than just bounding the norm - it’s perfect conservation. Additionally, they bound the 2-norm: <span class="math inline">\(\|H^{res}_l x\|_2 \leq \|x\|_2\)</span>. This dual property ensures that the signal energy is conserved during propagation, preventing both explosions and vanishing.</p>
+<p><strong>Furthermore - the crucial closure property:</strong> If you multiply two doubly stochastic matrices together, you get another doubly stochastic matrix! This means:</p>
+<p><span class="math display">\[\prod_{i=1}^{100} H^{res}_{100-i} \text{ is ALSO doubly stochastic}\]</span></p>
+<p>So even after 100 layers, the composite mapping still respects the “speed limit” of 1.0.</p>
+<p><strong>Why doubly stochastic instead of spectral normalization?</strong> While spectral normalization (constraining maximum singular value to 1) also prevents explosions, doubly stochastic matrices offer a key advantage: they allow <strong>flexible mixing</strong> between streams while preserving total energy. Spectral normalization only preserves norm without enabling the rich cross-stream information exchange that makes multi-stream architectures powerful. The doubly stochastic constraint provides stability AND expressivity.</p>
+</section>
+<section id="the-enforcer-sinkhorn-knopp" class="level3">
+<h3 class="anchored" data-anchor-id="the-enforcer-sinkhorn-knopp">The Enforcer: Sinkhorn-Knopp</h3>
+<p>We cannot train these constrained parameters directly using standard gradient descent. Instead, we train a “messy,” unconstrained parameter matrix <span class="math inline">\(\tilde{H}^{res}_l\)</span> and force it to follow the rules during the forward pass using the <strong>Sinkhorn-Knopp algorithm</strong>.</p>
+<p>This algorithm acts like a strict accountant. It alternates between normalizing rows and columns:</p>
+<p><span class="math display">\[M^{(t)} = T_r(T_c(M^{(t-1)}))\]</span></p>
+<p>Where <span class="math inline">\(T_r\)</span> normalizes rows (divide each row by its sum) and <span class="math inline">\(T_c\)</span> normalizes columns (divide each column by its sum).</p>
+<p><strong>Step-by-step example:</strong></p>
+<p>Starting matrix (after exp to make it positive):</p>
+<pre><code>[1.0  3.0]
+[2.0 10.0]</code></pre>
+<p>Row sums: [4, 12], Column sums: [3, 13]</p>
+<p><strong>Iteration 1 - Normalize rows:</strong></p>
+<pre><code>[0.25  0.75]  (row 1 / 4)
+[0.17  0.83]  (row 2 / 12)</code></pre>
+<p>Column sums: [0.42, 1.58]</p>
+<p><strong>Iteration 1 - Normalize columns:</strong></p>
+<pre><code>[0.60  0.47]  (col 1 / 0.42, col 2 / 1.58)
+[0.40  0.53]</code></pre>
+<p>Row sums: [1.07, 0.93]</p>
+<p>After ~20 iterations, both constraints are satisfied to high precision! The Birkhoff polytope is a <strong>convex set</strong>, and Sinkhorn-Knopp is performing an <strong>alternating projection</strong> between two linear constraints, guaranteed to converge.</p>
+<p><strong>What Do These Matrices Actually Look Like?</strong> <img src="../../files/images/figure8.png" class="img-fluid" style="width:100.0%" alt="Learned Mapping Visualizations"> <em>Figure 8 from the paper - Visualizations of learned mappings. Top row shows unstable HC matrices with extreme values. Bottom row shows mHC’s doubly stochastic matrices with controlled, balanced weights.</em></p>
+<p>This figure reveals the difference in practice:</p>
+<p><strong>HC (top row):</strong> The unconstrained matrices show extreme values (ranging from -259 to +509 in composite mappings). When you see a row sum of 18.73 or -15.29, that’s the “rocket launch” happening - signals being amplified or attenuated wildly. Notice how the forward signal gain and backward gradient gain (labeled on axes) deviate massively from 1.0.</p>
+<p><strong>mHC (bottom row):</strong> Every matrix is beautifully balanced. Individual entries vary (showing the network learned something!), but crucially: row sums ≈ 1.0, column sums ≈ 1.0. Even in the composite mapping <code>∏ P_Mres(H^res)</code> after 60 layers, the gains stay near 1.0. The Sinkhorn constraint is working exactly as designed.</p>
+</section>
+</section>
+<section id="this-is-the-before-and-after-of-manifold-constraints---transforming-chaos-into-controlled-stable-mixing." class="level2">
+<h2 class="anchored" data-anchor-id="this-is-the-before-and-after-of-manifold-constraints---transforming-chaos-into-controlled-stable-mixing.">This is the “before and after” of manifold constraints - transforming chaos into controlled, stable mixing.</h2>
+</section>
+<section id="part-5-cheating-the-memory-wall" class="level2">
+<h2 class="anchored" data-anchor-id="part-5-cheating-the-memory-wall">Part 5: Cheating the Memory Wall</h2>
+<p>The mathematical elegance of the Birkhoff Polytope comes with a heavy price tag. By setting the expansion rate to <code>n=4</code>, the authors effectively widened the highway by four times, creating a massive data pile-up.</p>
+<section id="quantifying-the-cost" class="level3">
+<h3 class="anchored" data-anchor-id="quantifying-the-cost">Quantifying the Cost</h3>
+<p>Consider training a standard 100-layer Large Language Model with hidden dimension <code>d = 4096</code>, batch size = 1 million tokens, and FP16 precision (2 bytes per number).</p>
+<p><strong>Standard Model (n=1):</strong></p>
+<pre><code>Memory = 100 layers × 1M tokens × 4096 dim × 2 bytes
+       = 819.2 GB ≈ 800 GB</code></pre>
+<p><strong>Hyper-Connected Model (n=4):</strong></p>
+<pre><code>Memory = 100 layers × 1M tokens × (4 × 4096) dim × 2 bytes
+       = 3,276.8 GB ≈ 3.2 TB</code></pre>
+<p>This <strong>3.2 Terabytes</strong> is the <strong>Memory Wall</strong>. For reference, an NVIDIA H100 GPU has 80 GB of HBM memory. You’d need <strong>41 H100 GPUs</strong> just to hold the activations!</p>
+</section>
+<section id="why-is-mhc-memory-heavy-but-compute-light" class="level3">
+<h3 class="anchored" data-anchor-id="why-is-mhc-memory-heavy-but-compute-light">Why is mHC Memory-Heavy but Compute-Light?</h3>
+<p>Let’s break down the operations to understand this crucial trade-off.</p>
+<p><strong>Computational Complexity (FLOPs):</strong> For a mixing operation <span class="math inline">\(H^{res}_l x_l\)</span> where <span class="math inline">\(H^{res}_l \in \mathbb{R}^{4 \times 4}\)</span> and <span class="math inline">\(x_l \in \mathbb{R}^{4 \times 4096}\)</span>:</p>
+<pre><code>FLOPs = 2 × 4 × 4 × 4096 ≈ 131K operations per token</code></pre>
+<p><strong>Compare this to the FFN layer:</strong></p>
+<pre><code>FLOPs = 2 × 4096 × (4 × 4096) ≈ 134M operations per token</code></pre>
+<p>The mHC mixing is <strong>1000× cheaper</strong> in terms of compute! It’s literally just multiplying a tiny 4×4 matrix by the streams. This is “lightweight math.”</p>
+<p><strong>Memory Complexity (Bytes):</strong> But we need to <strong>store</strong> those 4 expanded streams:</p>
+<pre><code>Memory = 4 streams × 4096 dim × 2 bytes = 32,768 bytes per token
+vs.
+Standard = 1 stream × 4096 dim × 2 bytes = 8,192 bytes per token</code></pre>
+<p><strong>4× more memory</strong>, but the computation is negligible. Modern GPUs are <strong>memory-bandwidth limited</strong>, not compute-limited. Reading 3.2 TB of data from memory takes over 1 second, even if the actual math only takes 0.1 seconds! This is why the “recomputation trick” works - we trade a cheap 0.1s of extra compute to avoid paying the expensive 1s+ of memory I/O.</p>
+</section>
+<section id="solution-1-kernel-fusion-the-countertop-strategy" class="level3">
+<h3 class="anchored" data-anchor-id="solution-1-kernel-fusion-the-countertop-strategy">Solution 1: Kernel Fusion (The “Countertop” Strategy)</h3>
+<p>The first bottleneck is speed. The Sinkhorn algorithm requires reading and writing the matrix from memory 40 times (20 iterations × 2 operations per iteration).</p>
+<p><strong>The Delivery Truck Problem:</strong> Without fusion, each iteration loads from slow GPU HBM memory, performs fast computation, then writes back. The frequent memory transfers dominate the execution time.</p>
+<p><strong>With Kernel Fusion:</strong> 1. Load matrix from HBM to GPU registers (on-chip, high bandwidth) 2. Do ALL 20 iterations entirely in registers 3. Write final result back to HBM</p>
+<p>The solution is <strong>Kernel Fusion</strong>. By writing a custom kernel (using TileLang), the engineers load the small <span class="math inline">\(n \times n\)</span> mixing matrix into the GPU’s ultra-fast registers. They perform all 20 iterations of the math right there, without ever sending intermediate results back to main memory. This turns a bandwidth-bound operation into a compute-bound one, significantly reducing the overhead of the Sinkhorn iterations.</p>
+</section>
+<section id="solution-2-selective-recomputing-the-salt-trick" class="level3">
+<h3 class="anchored" data-anchor-id="solution-2-selective-recomputing-the-salt-trick">Solution 2: Selective Recomputing (The “Salt” Trick)</h3>
+<p>Fusion fixes the speed, but we still have a 3.2 TB storage problem. This is where <strong>Selective Recomputing</strong> saves the day.</p>
+<p>The engineers realized that the mHC mixing operation is computationally cheap (lightweight math) but memory-heavy (massive tensors). Therefore, they made the strategic decision to <strong>delete</strong> the massive output immediately after using it. Instead of paying the “rent” of storing these expanded streams, they pay a tiny “tax” of extra compute to re-calculate them from scratch during the backward pass.</p>
+<p><strong>The optimal block size:</strong></p>
+<p><span class="math display">\[x_{l+1} = x_l + F(x_l, W_l)\]</span></p>
+<p>This formula minimizes total memory by balancing two factors: If blocks are too small, you need to store many checkpoints; if blocks are too large, you need huge transient memory for the active block.</p>
+<p>For a 100-layer model with n=4:</p>
+<pre><code>L_r* = √(4 × 100 / 6) ≈ 8-10 layers per block</code></pre>
+<p><strong>Memory breakdown with <span class="math inline">\(L_r = 10\)</span>:</strong></p>
+<pre><code>Resident memory (first layer of each block):
+  10 blocks × 1M tokens × 4 × 4096 × 2 bytes = 328 GB
+
+Transient memory (active block during backprop):
+  From Table 3: (n+2)C per layer = (4+2) × 4096 = 24,576 elements
+  10 layers × 1M tokens × 24,576 × 2 bytes = 492 GB
+
+Total peak: 820 GB (down from 3.2 TB, a 4× reduction!)</code></pre>
+<p><img src="../../files/images/figure5.png" class="img-fluid" style="width:100.0%" alt="Recomputation Strategy"> <em>Figure 4 from the paper - shows the communication-computation overlapping strategy</em></p>
+<p>This trade-off allows the impossible model to fit onto standard hardware.</p>
+<hr>
+</section>
+</section>
+<section id="part-6-from-theory-to-code" class="level2">
+<h2 class="anchored" data-anchor-id="part-6-from-theory-to-code">Part 6: From Theory to Code</h2>
+<p>This is just the basic variant, I will be writing more about the code in details in coming posts.</p>
+<p>To realize the savings we calculated - avoiding the 3.2 TB memory explosion - we must translate our “Traffic Rules” and “Salt Trick” into actual code. We can replicate the exact logic using <strong>JAX</strong>, where <strong>JIT (Just-In-Time)</strong> handles Kernel Fusion and <strong>Checkpointing</strong> handles Recomputing.</p>
+<p><strong>Note:</strong> The code below shows only the Sinkhorn-Knopp projection and core mixing operation. A complete mHC implementation requires integrating the pre-aggregation (<span class="math inline">\(H^{pre}_l\)</span>) and post-distribution (<span class="math inline">\(H^{post}_l\)</span>) matrices along with the residual function <span class="math inline">\(F(x, W)\)</span>. See the paper for full architectural details.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. THE ENFORCER: Sinkhorn-Knopp Projection</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="at">@jax.jit</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sinkhorn_knopp(log_matrix, iterations<span class="op">=</span><span class="dv">20</span>, eps<span class="op">=</span><span class="fl">1e-8</span>):</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Line below implements: M^(0) = exp(H̃^res_l)</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># From Equation 8 (page 9): H^res_l = Sinkhorn-Knopp(H̃^res_l)</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Initial step before Equation 9</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> jnp.exp(log_matrix)  <span class="co"># ← Initial M^(0)</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> body_fun(i, mat):</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Both lines below implement Equation 9 (page 9):</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>        <span class="co"># M^(t) = T_r(T_c(M^(t-1)))</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>        mat <span class="op">=</span> mat <span class="op">/</span> (jnp.<span class="bu">sum</span>(mat, axis<span class="op">=</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>) <span class="op">+</span> eps)  <span class="co"># ← T_r (row normalization)</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>        mat <span class="op">=</span> mat <span class="op">/</span> (jnp.<span class="bu">sum</span>(mat, axis<span class="op">=</span><span class="dv">0</span>, keepdims<span class="op">=</span><span class="va">True</span>) <span class="op">+</span> eps)  <span class="co"># ← T_c (column normalization)</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> mat</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> jax.lax.fori_loop(<span class="dv">0</span>, iterations, body_fun, M)  <span class="co"># ← Iterates Equation 9 for t_max iterations</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> M</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. THE LAYER: Putting it together</span></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a><span class="at">@jax.checkpoint</span> </span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mhc_layer(x, w_res_log):</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Line below: Third line of Equation 8 (page 9)</span></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># H^res_l = Sinkhorn-Knopp(H̃^res_l)</span></span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>    H_res <span class="op">=</span> sinkhorn_knopp(w_res_log)  <span class="co"># ← Equation 8 (third line)</span></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Line below: First term of Equation 3 (page 3)</span></span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>    <span class="co"># x_{l+1} = H^res_l x_l + (H^post_l)^T F(H^pre_l x_l, W_l)</span></span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>    <span class="co">#           ^^^^^^^^^^^^ (this part only)</span></span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>    x_new <span class="op">=</span> jnp.matmul(H_res, x)  <span class="co"># ← First term of Equation 3</span></span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x_new</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Key Implementation Details:</strong></p>
+<p><strong><code>@jax.jit</code> - Kernel Fusion:</strong> Tells JAX to compile the function into optimized GPU kernels. The <code>fori_loop</code> iterations are unrolled and fused into a single kernel where all 20 Sinkhorn iterations stay in GPU registers.</p>
+<p><strong><code>@jax.checkpoint</code> - Selective Recomputing:</strong> Discards function outputs after forward pass and automatically recomputes them during backward pass. Saves <span class="math inline">\(4 \times\)</span> memory at ~0.4% compute cost.</p>
+<hr>
+</section>
+<section id="part-7-so-where-are-we" class="level2">
+<h2 class="anchored" data-anchor-id="part-7-so-where-are-we">Part 7: So where are we?</h2>
+<p>We’ve walked through the theoretical crash of Hyper-Connections and the engineering gymnastics required to fix it. But does the <strong>Manifold Constraint</strong> actually work in practice? The results from the DeepSeek-V3 technical report offer a definitive “yes.”</p>
+<section id="the-rocket-launch-confirmed" class="level3">
+<h3 class="anchored" data-anchor-id="the-rocket-launch-confirmed">The “Rocket Launch” Confirmed</h3>
+<p>Recall our fear that unconstrained Hyper-Connections would lead to exploding gradients. We can now look at the empirical evidence in the paper.</p>
+<p><img src="../../files/images/figure3.png" class="img-fluid" style="width:100.0%" alt="Gradient Magnitude Comparison"> <em>Figure 7 from the paper - shows mHC maintains stable gradient magnitude around 1.0 while HC explodes to nearly 10^4</em></p>
+<p>The blue line (standard Hyper-Connected model, unconstrained) shoots up exponentially, with the backward gradient gain reaching a magnitude of nearly <strong>10^4</strong>. This is the “Rocket Launch” in real life - a signal explosion that destroys training stability.</p>
+<p>In stark contrast, the grey line (mHC model) stays perfectly flat near <strong>1.0</strong>. The “Traffic Rules” work. The signal is conserved, allowing the model to train as stably as a standard ResNet, even with the expanded highway.</p>
+</section>
+<section id="stability-at-scale" class="level3">
+<h3 class="anchored" data-anchor-id="stability-at-scale">Stability at Scale</h3>
+<p>This stability isn’t just a neat chart; it translates directly to training performance.</p>
+<p><img src="../../files/images/figure2.png" class="img-fluid" style="width:100.0%" alt="Training Stability"> <em>Figure 5 from the paper - shows smooth training curves for mHC vs unstable HC</em></p>
+<p>mHC achieves a <strong>loss gap improvement of roughly 0.021</strong> compared to the baseline. In the world of Large Language Models, where improvements are measured in fractions of a percent, this is a massive leap in efficiency.</p>
+</section>
+<section id="the-cost-of-safety" class="level3">
+<h3 class="anchored" data-anchor-id="the-cost-of-safety">The Cost of Safety</h3>
+<p>The most impressive part of this story, however, is the price tag. Because of the <strong>Kernel Fusion</strong> and <strong>Selective Recomputing</strong> strategies, the paper reports that mHC introduces only a <strong>6.7% increase</strong> in training time compared to a standard model.</p>
+<p>This is the “Free Lunch” of Deep Learning: we get the massive capacity increase of a 4-lane highway for nearly the price of a single-lane road.</p>
+<p><img src="../../files/images/figure6.png" class="img-fluid" style="width:100.0%" alt="Scaling Results"> <em>Figure 6 from the paper - shows mHC maintains advantages across different scales</em></p>
+</section>
+<section id="performance-on-real-benchmarks" class="level3">
+<h3 class="anchored" data-anchor-id="performance-on-real-benchmarks">Performance on Real Benchmarks</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Benchmark</th>
+<th>Baseline</th>
+<th>HC</th>
+<th><strong>mHC</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>BBH (Reasoning)</td>
+<td>43.8</td>
+<td>48.9</td>
+<td><strong>51.0</strong></td>
+</tr>
+<tr class="even">
+<td>DROP (Reading)</td>
+<td>47.0</td>
+<td>51.6</td>
+<td><strong>53.9</strong></td>
+</tr>
+<tr class="odd">
+<td>GSM8K (Math)</td>
+<td>46.7</td>
+<td>53.2</td>
+<td><strong>53.8</strong></td>
+</tr>
+<tr class="even">
+<td>MMLU (Knowledge)</td>
+<td>59.0</td>
+<td>63.0</td>
+<td><strong>63.4</strong></td>
+</tr>
+</tbody>
+</table>
+<p>mHC yields comprehensive improvements, consistently outperforming the baseline and surpassing HC on the majority of tasks. Notably, compared to HC, mHC further enhances the model’s reasoning capabilities, delivering performance gains of 2.1% on BBH and 2.3% on DROP.</p>
+<hr>
+</section>
+</section>
+<section id="part-8-open-questions" class="level2">
+<h2 class="anchored" data-anchor-id="part-8-open-questions">Part 8: Open Questions</h2>
+<p>While mHC has solved the immediate problem of stabilizing Hyper-Connections, it opens a fascinating door for future research. We used the <strong>Birkhoff Polytope</strong> because it intuitively maps to “conservation of energy.” But is this the only - or even the best - manifold for deep learning?</p>
+<section id="alternative-manifolds-a-brief-history" class="level3">
+<h3 class="anchored" data-anchor-id="alternative-manifolds-a-brief-history">Alternative Manifolds: A Brief History</h3>
+<p>The idea of constraining weights to specific manifolds isn’t new. It’s part of a rich research tradition in <strong>Geometric Deep Learning</strong>. Two notable successes stand out:</p>
+<p><strong>Spectral Normalization (2018)</strong> - One of the most successful manifold constraints for GANs (<a href="https://arxiv.org/abs/1802.05957">Miyato et al., 2018</a>). They constrain weight matrices to have a maximum singular value of 1, which is geometrically equivalent to projecting onto a specific manifold. Just like mHC, spectral normalization prevents gradient explosions by bounding the Lipschitz constant of the network. It became standard in GAN training because it stabilized discriminator training.</p>
+<p><strong>Stiefel Manifold for Orthogonal Weights</strong> - The set of all orthonormal matrices (where columns are perpendicular unit vectors). Several papers have explored this:</p>
+<p><strong>Orthogonal RNNs</strong> (<a href="https://arxiv.org/abs/1602.06664">Henaff et al., 2016</a>) showed that orthogonal recurrent weight matrices help RNNs learn long-term dependencies. The <strong>Riemannian Approach to Batch Normalization</strong> (<a href="https://arxiv.org/abs/1803.10094">Cho &amp; Lee, 2017</a>) used manifold optimization for normalization layers.</p>
+<p><strong>The connection to mHC:</strong> Orthogonality constraints preserve norm (like doubly stochastic matrices) but they force <strong>diversity</strong> between features rather than <strong>mixing</strong>. mHC chose doubly stochastic because it allows flexible mixing while preserving total energy. Could the Stiefel manifold work for mHC? It might encourage more specialized stream representations. The challenge is computational cost - orthogonal projections require SVD, which is more expensive than Sinkhorn iterations.</p>
+<p>Mathematically, the Birkhoff Polytope is just one of many choices. We could imagine projecting weights onto other manifolds that capture different properties of the loss landscape.</p>
+</section>
+<section id="efficiency-questions" class="level3">
+<h3 class="anchored" data-anchor-id="efficiency-questions">Efficiency Questions</h3>
+<p>There is also the question of efficiency. We currently use 20 iterations of Sinkhorn-Knopp to enforce the rules. Could we get away with 5? Or is there a learned approximation - a small neural network that predicts the projection in a single step - that could replace the iterative loop entirely? As models continue to grow, these questions of “Geometric Deep Learning” will likely become the new frontier of optimization.</p>
+<hr>
+</section>
+</section>
+<section id="conclusion-the-physics-of-the-signal" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion-the-physics-of-the-signal">Conclusion: The Physics of the Signal</h2>
+<p>The story of DeepSeek-V3’s <strong>Manifold-Constrained Hyper-Connections</strong> is a masterclass in modern AI research. It identifies a fundamental structural flaw (the lack of Identity Mapping in expanded streams), solves it with rigorous mathematics (the Birkhoff Polytope), and makes it feasible with hardcore systems engineering (TileLang Fusion and Recomputing).</p>
+<p>For us developers and researchers, the lesson is clear: <strong>Scaling isn’t just about making things bigger</strong>. It’s about understanding the “Physics” of the signal. If you can control the flow of information - keeping it on the “Safe Manifold” - you can break the memory wall and build models that are both larger and smarter than we thought possible. (See Figure 1(c) at the beginning of this post)</p>
+<hr>
+</section>
+<section id="references-further-reading" class="level2">
+<h2 class="anchored" data-anchor-id="references-further-reading">References &amp; Further Reading</h2>
+<p><strong>Paper:</strong> <a href="https://arxiv.org/abs/2512.24880">mHC: Manifold-Constrained Hyper-Connections</a> (DeepSeek-AI, 2025)</p>
+<p><strong>Original HC Paper:</strong> <a href="https://arxiv.org/abs/2409.19606">Hyper-Connections</a> (Zhu et al., 2024)</p>
+<p><strong>Classic Reference:</strong> <a href="https://arxiv.org/abs/1603.05027">Identity Mappings in Deep Residual Networks</a> (He et al., 2016)</p>
+<p><strong>Manifold Constraints:</strong> - <a href="https://arxiv.org/abs/1802.05957">Spectral Normalization for GANs</a> (Miyato et al., 2018) - <a href="https://arxiv.org/abs/1602.06664">Orthogonal RNNs</a> (Henaff et al., 2016) - <a href="https://arxiv.org/abs/1803.10094">Riemannian Batch Normalization</a> (Cho &amp; Lee, 2017)</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("^(?:http:|https:)\/\/drganghe\.github\.io\/custom");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<a href="https://rish-av.github.io">Rishav</a> ©
+<script>document.write(new Date().getFullYear())</script>
+</div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

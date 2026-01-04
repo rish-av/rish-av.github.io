@@ -1,0 +1,72 @@
+---
+title: "Rishav's Website"
+subtitle: |
+  Graduate Researcher at Mila \
+  Building Reliable Machine Learning Systems
+description-meta: "Rishav is a graduate researcher at Mila researching reliable machine learning systems, with interests in RL, mechanistic interpretability, and real-time systems. Prior experience in precision farming and computer vision."
+image: "files/images/rishav1.png"
+page-navigation: false
+toc: false
+page-layout: full
+
+about:
+  id: hero-heading
+  template: trestles
+  image-width: 70%
+  links:
+    - icon: github
+      text: GitHub
+      href: https://github.com/rish-av
+      target: _blank
+    - icon: envelope
+      text: Email
+      href: mailto:mail.rishav9@gmail.com
+      target: _blank
+    - icon: linkedin
+      text: LinkedIn
+      href: https://linkedin.com/in/rishvv
+      target: _blank
+    - icon: twitter
+      text: Twitter
+      href: https://twitter.com/rishav_real
+      target: _blank
+    - icon: book
+      text: Google Scholar
+      href: https://scholar.google.com/citations?user=YOUR_ID
+      target: _blank
+
+listing:
+  - id: recent-posts
+    contents:
+      - posts
+      - posts/external-blogs.yml
+    type: grid
+    max-items: 3
+    page-size: 3
+    fields: [image, date, title, description]
+    max-description-length: 75
+    sort:
+      - "pin asc"
+      - "date desc"
+---
+
+:::{#hero-heading}
+
+I'm a graduate researcher at [Mila](https://mila.quebec/en), broadly interested in building reliable machine learning systems that work at scale. At Mila, my research has focused on topics in RL, mainly offline (explainability and adaptive regularization), real-time RL, and benchmarking SSL methods for Atari games.
+
+My larger goal is to develop safe, interpretable, real-time, and sample-efficient agents that scale, motivating my interests in areas like mechanistic interpretability, world models, and real-time distributed systems.
+
+Before Mila, I co-founded [Offside](https://pitchbook.com/profiles/company/539173-27) (scaled to 100k users), spent ~2 years at [DFKI](http://dfki.de) in Germany developing real-time vision algorithms for precision farming, and earned a BEng (Thesis) in Computer Science from [BITS Pilani](https://bits-pilani.ac.in/) in 2020.
+
+:::
+
+## Latest Posts
+
+:::{#recent-posts}
+:::
+
+<p align="right">[All Posts »](/posts.qmd)</p>
+
+## Beyond Research
+
+Outside of research, I enjoy reading about ancient civilizations, listening to classic rock, trekking, and strength training. I also write blogs reflecting on projects and life learnings.

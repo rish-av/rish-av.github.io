@@ -1,0 +1,11 @@
+---
+title: "Projects"
+listing:
+  type: grid
+  contents: projects
+  sort: "importance desc"
+  fields: [image, title, description]
+  image-height: 200px
+---
+
+My research and implementation projects.

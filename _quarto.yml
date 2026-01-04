@@ -1,0 +1,82 @@
+project:
+  type: website
+  output-dir: docs
+
+# Meta
+description-meta: "Rishav's personal website. Graduate researcher at Mila researching reliable machine learning systems. Interests in RL, mechanistic interpretability, and real-time systems. Blog on AI, coffee, and mountains."
+author-meta: "Rishav"
+
+website:
+  title: "Rishav"
+  image: "/files/images/rishav1.png"
+  description: "Graduate researcher at Mila building reliable machine learning systems."
+ 
+  navbar:
+    background: light
+
+    left:
+      - text: Blog
+        href: posts.qmd
+      - text: Projects
+        href: projects.qmd
+      - text: Publications
+        href: publications.qmd
+
+    right:
+      - icon: github
+        href: https://github.com/rish-av
+        target: _blank
+      - icon: twitter
+        href: https://twitter.com/rishav_real
+        target: _blank
+      - icon: linkedin
+        href: https://linkedin.com/in/rishvv
+        target: _blank
+  
+  page-navigation: true
+  
+  page-footer:
+    center: "[Rishav](https://rish-av.github.io) &copy; <script>document.write(new Date().getFullYear())</script>"  
+  
+  search:
+    location: navbar
+    type: textbox
+  
+  reader-mode: true
+
+  draft-mode: unlinked
+
+  repo-url: https://github.com/rish-av/rish-av.github.io
+#  repo-actions: [edit, issue, source]
+
+  open-graph: true
+
+  twitter-card: true
+#  card-style: summary
+
+  site-url: "https://rish-av.github.io"
+
+  google-analytics:
+    tracking-id: "G-1ZTF5BQFYQ"  # Rishav's tracking ID
+    anonymize-ip: true 
+
+bibliography: references.bib
+
+format:
+  html:
+    theme: cosmo
+    css:
+      - styles.css
+      - custom-pin.css
+    toc: true
+    footnotes-hover: true
+    code-copy: true
+    code-link: true
+    code-overflow: wrap
+    fig-align: center
+    link-external-icon: false
+    link-external-newwindow: true
+    email-obfuscation: javascript
+    link-external-filter: '^(?:http:|https:)\/\/drganghe\.github\.io\/custom'
+    include-in-header: "files/includes/_academic.qmd"
+

@@ -1,0 +1,206 @@
+---
+title: "CUDA from Scratch - Matrix Multiplication, Memory Models, and the Road to RL Acceleration"
+date: "2025-3-20"
+categories: [ai]
+description: "Cuda Programming"
+image: "/files/images/cuda.png"
+---
+So you have been thinking about CUDA programming from a while and now want to learn but are confused how to proceed and know about memory models, etc. in CUDA. Well, even I am confused, so let's learn together. This is the first blog of the CUDA series where the end goal is to code DQN in C and accelerate training and inference with CUDA.
+
+With AI rapidly advancing, its integration into high-stakes environments is becoming inevitable. In this landscape, efficient deployment is arguably more critical than the pace of new research. As the number of AI tools continues to grow, **efficiency may well become the defining moat** for the tools that endure. 
+
+For nearly every use case, there’s potential to unlock significant performance gains — often by writing custom CUDA kernels tailored to the task.
+
+**RL lives in my heart.** Thus, the end goal of this learning experience is to write a DQN completely in C and accelerate the training using CUDA kernels.
+
+So let's go...!
+
+Let's start off with memory organization in CUDA, then intuitively I will explain my first program: **matrix multiplication in CUDA**.
+
+## First Principles: Memory Organization in CUDA
+
+Before writing a single kernel, let’s zoom into the GPU's memory layout. This is where most CUDA bugs (and performance pitfalls) are born.
+
+In CUDA, like in C/C++, **matrices are stored in row-major order**.
+
+### What does row-major mean?
+
+Imagine a 2D matrix:
+
+```cpp
+A = [[1, 2, 3],
+     [4, 5, 6]]
+```
+
+Even though it's 2D logically, it's stored in a flat 1D array as:
+
+```cpp
+[1, 2, 3, 4, 5, 6]
+```
+
+To access the element at `A[row][col]`, the index becomes:
+
+```cpp
+index = row * numCols + col
+```
+
+For the above matrix, `A[1][2]` is `1*3 + 2 = 5`, and sure enough, `A[5] = 6`.
+
+This little indexing trick — `row * numCols + col` — is foundational. We’ll use it repeatedly in our CUDA code to compute where each value lives in memory.
+
+## Matrix Multiplication Recap
+
+We have two matrices:
+
+- A of size **M × K**
+- B of size **K × N**
+
+We want to compute:
+- C = A × B → a matrix of size **M × N**
+
+The formula for each element of C is:
+
+```cpp
+C[row][col] = sum over i of A[row][i] * B[i][col]
+```
+
+That’s a dot product between a row from A and a column from B.
+
+##  Writing the CUDA Kernel
+
+Here’s our minimal working kernel:
+
+```cpp
+__global__ void matMulKernel(const float* A, const float* B, float* C, int M, int K, int N) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (row < M && col < N) {
+        float sum = 0.0f;
+        for (int i = 0; i < K; ++i) {
+            sum += A[row * K + i] * B[i * N + col];
+        }
+        C[row * N + col] = sum;
+    }
+}
+```
+
+## Thread Indexing: Why `.y` for Row and `.x` for Col?
+
+```cpp
+int row = blockIdx.y * blockDim.y + threadIdx.y;
+int col = blockIdx.x * blockDim.x + threadIdx.x;
+```
+
+- Threads are arranged in a **2D grid**
+- Each thread computes one element of the result matrix `C[row][col]`
+- Rows → vertical → **Y-axis**
+- Columns → horizontal → **X-axis**
+
+Hence, `row` is computed using `.y` components, and `col` using `.x`.
+
+Makes your mental model clean and your code correct.
+
+---
+
+## Memory Access: Why `row * N + col`?
+
+This was one of the core doubts that tripped me up early on:
+
+> “Shouldn’t it be `row * M + col` since the matrix has M rows?”
+
+Turns out — **no**. It’s `row * N + col` because:
+
+- We're accessing matrix C, which is **M × N**
+- Each row of C has **N elements**
+- So to access the start of `row`, we skip `row * N` elements
+- Then move `col` steps in → `row * N + col`
+
+Always remember: it’s about how **many columns** per row, not how many rows in total.
+
+---
+
+## What about B’s indexing: `B[i * N + col]`?
+
+Another “aha!” moment:
+
+> “Aren’t we accessing B column-wise here? Shouldn’t it be column-major?”
+
+Good instinct — but even though we’re *accessing down a column*, we’re still treating B as **row-major**.
+
+- We're accessing `B[i][col]`
+- Since B has **N columns**, row-major indexing says:
+
+```
+B[i][col] = i * N + col
+```
+
+So `B[i * N + col]` is still perfectly valid row-major indexing, even if the access pattern feels “column-ish”.
+
+---
+
+## Edge Case Gotcha: Tiny Matrices
+
+Say we multiply:
+
+- A = `[1 2 3]` → 1×3
+- B = `[1, 2, 3]ᵗ` → 3×1
+
+The result should be:
+
+```
+1×1 = [1×1 + 2×2 + 3×3] = [14]
+```
+
+But your code might crash or give garbage. Why?
+
+Because your kernel might launch **a full grid of threads**, and many of them will access memory out-of-bounds.
+
+Solution:
+```cpp
+if (row < M && col < N)
+```
+
+Always **bound your threads**. Especially with small matrices.
+
+---
+
+## Test Case
+
+Here’s a minimal test:
+
+```cpp
+int M = 1, K = 3, N = 1;
+float A[] = {1, 2, 3};   // 1x3
+float B[] = {1, 2, 3};   // 3x1
+float C[1];              // 1x1 output
+
+// Launch with grid/block of 1
+dim3 blockSize(1, 1);
+dim3 gridSize(1, 1);
+
+// Run the kernel → expect C[0] = 14
+```
+
+---
+
+##  The End Goal: DQN in Pure C + CUDA
+
+This matrix multiplication was a warm-up.
+
+My goal? To build **Deep Q-Networks** (DQN) completely in C, and **accelerate training with CUDA** — no PyTorch, no TensorFlow. Just raw speed and full control.
+
+Reinforcement learning lives in my heart.
+And this journey is all about learning from first principles.
+
+---
+
+##  What’s Next?
+
+- Tiled matrix multiplication (for speed!)
+- Shared memory optimization
+- Writing `ReLU`, `Softmax`, `Linear` layers in CUDA
+- Custom CUDA-based experience replay
+- CUDA kernels for DQN forward/backward pass
+
+Stay tuned — this is just the start!

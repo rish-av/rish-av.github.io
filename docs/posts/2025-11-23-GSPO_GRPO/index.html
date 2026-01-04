@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Rishav">
+<meta name="dcterms.date" content="2025-11-23">
+<meta name="description" content="Rishav’s personal website. Graduate researcher at Mila researching reliable machine learning systems. Interests in RL, mechanistic interpretability, and real-time systems. Blog on AI, coffee, and mountains.">
+
+<title>GSPO vs GRPO - Theory, Practice, and the Limits of Approximation – Rishav</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-3e8f12d1b5c8d04d32925f9f9ead600c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-1ZTF5BQFYQ"></script>
+
+<script type="text/javascript">
+
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-1ZTF5BQFYQ', { 'anonymize_ip': true});
+</script>
+
+<!-- 
+Load Academicons v1: https://jpswalsh.github.io/academicons/
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+
+<!---
+The following code are needed to show dimension citation and altmetrics.
+https://api.altmetric.com/embeds.html
+https://badge.dimensions.ai/
+--->
+
+<script type="text/javascript" src="https://d1bxh8uas1mnw7.cloudfront.net/assets/embed.js"></script>
+
+<script async="" src="https://badge.dimensions.ai/badge.js" charset="utf-8"></script>
+
+<script type="text/javascript" src="//cdn.plu.mx/widget-popup.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../custom-pin.css">
+<meta property="og:title" content="GSPO vs GRPO - Theory, Practice, and the Limits of Approximation – Rishav">
+<meta property="og:description" content="GSPO vs GRPO">
+<meta property="og:image" content="https://rish-av.github.io/files/images/gspo_vs_grpo.png">
+<meta property="og:site_name" content="Rishav">
+<meta property="og:image:height" content="404">
+<meta property="og:image:width" content="955">
+<meta name="twitter:title" content="GSPO vs GRPO - Theory, Practice, and the Limits of Approximation – Rishav">
+<meta name="twitter:description" content="GSPO vs GRPO">
+<meta name="twitter:image" content="https://rish-av.github.io/files/images/gspo_vs_grpo.png">
+<meta name="twitter:image-height" content="404">
+<meta name="twitter:image-width" content="955">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Rishav</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../posts.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../projects.html"> 
+<span class="menu-text">Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../publications.html"> 
+<span class="menu-text">Publications</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/rish-av" target="_blank"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://twitter.com/rishav_real" target="_blank"> <i class="bi bi-twitter" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://linkedin.com/in/rishvv" target="_blank"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Toggle reader mode">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-theoretical-problem" id="toc-the-theoretical-problem" class="nav-link active" data-scroll-target="#the-theoretical-problem">The Theoretical Problem</a></li>
+  <li><a href="#gradient-analysis" id="toc-gradient-analysis" class="nav-link" data-scroll-target="#gradient-analysis">Gradient Analysis</a></li>
+  <li><a href="#empirical-evidence" id="toc-empirical-evidence" class="nav-link" data-scroll-target="#empirical-evidence">Empirical Evidence</a></li>
+  <li><a href="#the-gspo-length-bias-issue" id="toc-the-gspo-length-bias-issue" class="nav-link" data-scroll-target="#the-gspo-length-bias-issue">The GSPO Length Bias Issue</a></li>
+  <li><a href="#dynamic-reward-grpo-the-current-state-of-the-art" id="toc-dynamic-reward-grpo-the-current-state-of-the-art" class="nav-link" data-scroll-target="#dynamic-reward-grpo-the-current-state-of-the-art">Dynamic Reward GRPO: The Current State-of-the-Art</a>
+  <ul class="collapse">
+  <li><a href="#key-improvements-in-dr-grpo" id="toc-key-improvements-in-dr-grpo" class="nav-link" data-scroll-target="#key-improvements-in-dr-grpo">Key Improvements in DR GRPO</a></li>
+  <li><a href="#empirical-performance" id="toc-empirical-performance" class="nav-link" data-scroll-target="#empirical-performance">Empirical Performance</a></li>
+  </ul></li>
+  <li><a href="#why-grpo-works-despite-being-wrong" id="toc-why-grpo-works-despite-being-wrong" class="nav-link" data-scroll-target="#why-grpo-works-despite-being-wrong">Why GRPO Works Despite Being Wrong</a>
+  <ul class="collapse">
+  <li><a href="#small-divergence-regime" id="toc-small-divergence-regime" class="nav-link" data-scroll-target="#small-divergence-regime">Small Divergence Regime</a></li>
+  <li><a href="#empirical-risk-minimization" id="toc-empirical-risk-minimization" class="nav-link" data-scroll-target="#empirical-risk-minimization">Empirical Risk Minimization</a></li>
+  <li><a href="#engineering-as-theory-compensation" id="toc-engineering-as-theory-compensation" class="nav-link" data-scroll-target="#engineering-as-theory-compensation">Engineering as Theory Compensation</a></li>
+  <li><a href="#task-structure-and-forgiveness" id="toc-task-structure-and-forgiveness" class="nav-link" data-scroll-target="#task-structure-and-forgiveness">Task Structure and Forgiveness</a></li>
+  <li><a href="#the-deepseek-r1-puzzle" id="toc-the-deepseek-r1-puzzle" class="nav-link" data-scroll-target="#the-deepseek-r1-puzzle">The DeepSeek-R1 Puzzle</a></li>
+  </ul></li>
+  <li><a href="#the-stability-analysis" id="toc-the-stability-analysis" class="nav-link" data-scroll-target="#the-stability-analysis">The Stability Analysis</a></li>
+  <li><a href="#production-deployment" id="toc-production-deployment" class="nav-link" data-scroll-target="#production-deployment">Production Deployment</a></li>
+  <li><a href="#when-each-method-wins" id="toc-when-each-method-wins" class="nav-link" data-scroll-target="#when-each-method-wins">When Each Method Wins</a></li>
+  <li><a href="#the-theoretical-lesson" id="toc-the-theoretical-lesson" class="nav-link" data-scroll-target="#the-theoretical-lesson">The Theoretical Lesson</a></li>
+  <li><a href="#practical-recommendations" id="toc-practical-recommendations" class="nav-link" data-scroll-target="#practical-recommendations">Practical Recommendations</a></li>
+  <li><a href="#limitations-and-caveats" id="toc-limitations-and-caveats" class="nav-link" data-scroll-target="#limitations-and-caveats">Limitations and Caveats</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">GSPO vs GRPO - Theory, Practice, and the Limits of Approximation</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">ai</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    GSPO vs GRPO
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">November 23, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    processEscapes: true,
+    processEnvironments: true
+  },
+  startup: {
+    ready: () => {
+      MathJax.startup.defaultReady();
+      MathJax.startup.promise.then(() => {
+        // Typeset the entire document after MathJax is ready
+        MathJax.typesetPromise();
+      });
+    }
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+<p>When Qwen released their GSPO paper questioning GRPO’s theoretical foundations, they ignited a debate about theoretical correctness versus empirical success. GSPO offers stronger theoretical guarantees. GRPO makes approximations in its importance sampling approach that can be problematic. Yet GRPO powers state-of-the-art models like DeepSeek-R1, which achieved breakthrough performance on mathematical reasoning tasks. This post examines why both perspectives have merit and what this reveals about the theory-practice gap in deep learning.</p>
+<section id="the-theoretical-problem" class="level2">
+<h2 class="anchored" data-anchor-id="the-theoretical-problem">The Theoretical Problem</h2>
+<p>GRPO’s objective computes token-level importance weights using single samples from each token distribution:</p>
+<p><span class="math display">\[J_{\text{GRPO}}(\theta) = \mathbb{E}\left[\frac{1}{G} \sum_{i=1}^{G} \frac{1}{\lvert y_i \rvert} \sum_{t=1}^{\lvert y_i \rvert} \min\left(w_{i,t}(\theta)\hat{A}_i, \text{clip}(w_{i,t}(\theta), 1-\varepsilon, 1+\varepsilon)\hat{A}_i\right)\right]\]</span></p>
+<p>where the importance ratio at each token is:</p>
+<p><span class="math display">\[w_{i,t}(\theta) = \frac{\pi_\theta(y_{i,t} \mid x, y_{i,&lt;t})}{\pi_{\theta_{\text{old}}}(y_{i,t} \mid x, y_{i,&lt;t})}\]</span></p>
+<p>The importance sampling principle requires multiple samples to make reweighting valid. For a random variable <span class="math inline">\(z\)</span>, proper importance sampling states:</p>
+<p><span class="math display">\[\mathbb{E}_{\pi_{\text{target}}}[f(z)] = \mathbb{E}_{\pi_{\text{behavior}}}\left[\frac{\pi_{\text{target}}(z)}{\pi_{\text{behavior}}(z)} \cdot f(z)\right]\]</span></p>
+<p>This equality holds asymptotically as the number of samples from <span class="math inline">\(\pi_{\text{behavior}}\)</span> approaches infinity. GRPO computes <span class="math inline">\(w_{i,t}\)</span> using a single sample <span class="math inline">\(y_{i,t}\)</span> from <span class="math inline">\(\pi_{\theta_{\text{old}}}(\cdot \mid x, y_{i,&lt;t})\)</span>. With only one sample per token position, the importance weight cannot perform valid distribution correction. Instead, it introduces high-variance noise that accumulates multiplicatively across the sequence length.</p>
+<p>It’s important to note that using single samples with importance weights is not inherently invalid. Many policy gradient methods do this. The question is whether GRPO’s specific token-level aggregation of these weights introduces problematic variance, particularly as sequence length increases. The concern is less about “violating” importance sampling and more about whether this approximation remains reasonable under various conditions.</p>
+<p>Consider a 1000-token response. GRPO computes 1000 independent importance weights, each based on a single sample. If we denote the estimation error at token <span class="math inline">\(t\)</span> as <span class="math inline">\(\epsilon_t\)</span>, the accumulated effect scales as <span class="math inline">\(\exp(\sum_t \epsilon_t)\)</span> or <span class="math inline">\(\prod_t (1 + \epsilon_t)\)</span>. Small per-token errors compound into large sequence-level errors. Qwen’s experiments show this accumulation leads to “catastrophic and irreversible model collapse” particularly in Mixture-of-Experts models and long-context scenarios.</p>
+<p>GSPO corrects this by computing importance ratios at the sequence level:</p>
+<p><span class="math display">\[J_{\text{GSPO}}(\theta) = \mathbb{E}\left[\frac{1}{G} \sum_{i=1}^{G} \min\left(s_i(\theta)\hat{A}_i, \text{clip}(s_i(\theta), 1-\varepsilon, 1+\varepsilon)\hat{A}_i\right)\right]\]</span></p>
+<p>where:</p>
+<p><span class="math display">\[s_i(\theta) = \left(\frac{\pi_\theta(y_i \mid x)}{\pi_{\theta_{\text{old}}}(y_i \mid x)}\right)^{\frac{1}{\lvert y_i \rvert}}\]</span></p>
+<p>The exponent <span class="math inline">\(\frac{1}{\lvert y_i \rvert}\)</span> applies length normalization via geometric mean, preventing longer sequences from dominating the importance ratio. All tokens in sequence <span class="math inline">\(y_i\)</span> share the same weight <span class="math inline">\(s_i(\theta)\)</span>, eliminating token-level fluctuations. This aligns the optimization unit with the reward unit, since rewards are assigned to complete sequences rather than individual tokens.</p>
+</section>
+<section id="gradient-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="gradient-analysis">Gradient Analysis</h2>
+<p>The gradient expressions reveal the fundamental difference. For GRPO:</p>
+<p><span class="math display">\[\nabla_\theta J_{\text{GRPO}} = \mathbb{E}\left[\frac{1}{G} \sum_{i=1}^{G} \hat{A}_i \cdot \frac{1}{\lvert y_i \rvert} \sum_{t=1}^{\lvert y_i \rvert} \frac{\pi_\theta(y_{i,t} \mid x, y_{i,&lt;t})}{\pi_{\theta_{\text{old}}}(y_{i,t} \mid x, y_{i,&lt;t})} \cdot \nabla_\theta \log \pi_\theta(y_{i,t} \mid x, y_{i,&lt;t})\right]\]</span></p>
+<p>For GSPO:</p>
+<p><span class="math display">\[\nabla_\theta J_{\text{GSPO}} = \mathbb{E}\left[\frac{1}{G} \sum_{i=1}^{G} \left(\frac{\pi_\theta(y_i \mid x)}{\pi_{\theta_{\text{old}}}(y_i \mid x)}\right)^{\frac{1}{\lvert y_i \rvert}} \cdot \hat{A}_i \cdot \frac{1}{\lvert y_i \rvert} \sum_{t=1}^{\lvert y_i \rvert} \nabla_\theta \log \pi_\theta(y_{i,t} \mid x, y_{i,&lt;t})\right]\]</span></p>
+<p>In GRPO, each token <span class="math inline">\(t\)</span> receives its own importance weight. These weights can vary arbitrarily: token 1 might get weight 0.5, token 2 weight 2.8, token 500 weight 0.09. The unequal weighting creates gradient variance that accumulates across the sequence. In GSPO, all tokens in sequence <span class="math inline">\(i\)</span> share the same scalar weight, producing uniform treatment and stable gradients.</p>
+<p>The following diagram illustrates the difference:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../../files/images/img/gspo_vs_grpo.png" class="img-fluid figure-img"></p>
+<figcaption>Token-Level vs Sequence-Level Weighting</figcaption>
+</figure>
+</div>
+<div style="background-color: #f0f4f8; padding: 20px; border-radius: 5px; font-family: monospace; margin: 20px 0; color: #1a1a1a; border-left: 4px solid #0084ff;">
+<p><strong style="color: #0066cc;">GRPO Token-Level Weighting:</strong><br> Token: [ 1 ] [ 2 ] [ 3 ] … [ 999 ] [1000]<br> Weight: [0.8 ] [2.1 ] [0.3 ] … [1.7 ] [0.1 ]<br> <span style="color: #d32f2f;">→ High variance, noisy gradients</span><br><br></p>
+<p><strong style="color: #0066cc;">GSPO Sequence-Level Weighting:</strong><br> Token: [ 1 ] [ 2 ] [ 3 ] … [ 999 ] [1000]<br> Weight: [1.05] [1.05] [1.05] … [1.05] [1.05]<br> <span style="color: #2e7d32;">→ Uniform, stable gradients</span></p>
+</div>
+</section>
+<section id="empirical-evidence" class="level2">
+<h2 class="anchored" data-anchor-id="empirical-evidence">Empirical Evidence</h2>
+<p><strong>Note on experimental setup:</strong> The following results are reported from the RSPO paper. A fair comparison requires equivalent hyperparameter tuning effort for all methods. While these results suggest significant issues with GRPO on MoE architectures, the approximations (“~”) in GRPO’s scores and the specific experimental conditions warrant careful interpretation.</p>
+<p>The evidence from training on Mixture-of-Experts architectures is striking. The RSPO paper evaluated Qwen3-30B-A3B across five mathematical reasoning benchmarks:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Benchmark</th>
+<th>Base Model</th>
+<th>GRPO</th>
+<th>GSPO</th>
+<th>GMPO</th>
+<th>RSPO</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>AIME24</td>
+<td>43.3</td>
+<td>~20</td>
+<td>74.1</td>
+<td>73.3</td>
+<td>80.0</td>
+</tr>
+<tr class="even">
+<td>AMC23</td>
+<td>69.9</td>
+<td>~45</td>
+<td>77.1</td>
+<td>75.9</td>
+<td>79.5</td>
+</tr>
+<tr class="odd">
+<td>MATH500</td>
+<td>82.8</td>
+<td>~70</td>
+<td>88.2</td>
+<td>88.6</td>
+<td>88.4</td>
+</tr>
+<tr class="even">
+<td>Minerva</td>
+<td>48.5</td>
+<td>~35</td>
+<td>58.1</td>
+<td>57.0</td>
+<td>61.8</td>
+</tr>
+<tr class="odd">
+<td>OlympiadBench</td>
+<td>44.7</td>
+<td>~40</td>
+<td>54.2</td>
+<td>54.8</td>
+<td>52.6</td>
+</tr>
+<tr class="even">
+<td><strong>Average</strong></td>
+<td><strong>57.8</strong></td>
+<td><strong>35.0</strong></td>
+<td><strong>70.3</strong></td>
+<td><strong>69.9</strong></td>
+<td><strong>77.1</strong></td>
+</tr>
+</tbody>
+</table>
+<p>GRPO not only underperforms GSPO but actually degrades below the base model. Training curves show pronounced collapse around 200 to 500 steps. The cause is expert activation volatility: after each gradient update in a 48-layer MoE model, approximately 10% of activated experts change for the same input. Token-level importance ratios <span class="math inline">\(w_{i,t}\)</span> fluctuate drastically as different experts are selected, preventing convergence.</p>
+<p>This expert volatility explanation is plausible and consistent with the observed failures, though definitively proving causation would require ablation studies isolating this factor from other potential causes like learning rates, batch sizes, or other architectural interactions.</p>
+<p>GSPO avoids this failure mode because sequence-level likelihoods remain stable even when individual token expert assignments shift. The sequence likelihood <span class="math inline">\(\pi_\theta(y_i \mid x)\)</span> aggregates over all token-level expert decisions, smoothing out routing variability. This eliminates the need for “Routing Replay,” a complex workaround that caches expert routes from the old policy and replays them during importance ratio computation.</p>
+<p>On AIME 2024 using Qwen2.5-32B base, the performance gap is equally stark:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Score</th>
+<th>Training Steps</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Vanilla GRPO</td>
+<td>30</td>
+<td>Baseline</td>
+</tr>
+<tr class="even">
+<td>GSPO</td>
+<td>70-80</td>
+<td>Same</td>
+</tr>
+<tr class="odd">
+<td>GRPO + engineering (DAPO)</td>
+<td>50</td>
+<td>50% of DeepSeek</td>
+</tr>
+<tr class="even">
+<td>GRPO + engineering (SRPO)</td>
+<td>50</td>
+<td>10% of DeepSeek</td>
+</tr>
+</tbody>
+</table>
+<p>Vanilla GRPO achieves only 30 points, while GSPO reaches 70 to 80 points with equivalent compute. The DAPO and SRPO variants improve GRPO by adding extensive engineering: asymmetric clipping, dynamic sampling, token-level loss modifications, and two-stage training. These modifications compensate for GRPO’s theoretical deficiencies but require significant implementation complexity.</p>
+<p>A counter-intuitive finding emerges from analyzing clipping statistics. GRPO clips approximately 0.13% of tokens during training, while GSPO clips 15% of tokens (two orders of magnitude more). Yet GSPO achieves superior performance. This demonstrates that GRPO’s token-level gradients are inherently noisy. Even unclipped gradients hurt rather than help. GSPO’s aggressive sequence-level clipping effectively filters out high-variance samples.</p>
+</section>
+<section id="the-gspo-length-bias-issue" class="level2">
+<h2 class="anchored" data-anchor-id="the-gspo-length-bias-issue">The GSPO Length Bias Issue</h2>
+<p>While GSPO addresses GRPO’s variance problems, it introduces its own limitation: <strong>length bias</strong>. The geometric mean normalization in GSPO’s importance ratio:</p>
+<p><span class="math display">\[s_i(\theta) = \left(\frac{\pi_\theta(y_i \mid x)}{\pi_{\theta_{\text{old}}}(y_i \mid x)}\right)^{\frac{1}{\lvert y_i \rvert}}\]</span></p>
+<p>can create systematic biases in how the model treats responses of different lengths. Specifically:</p>
+<ol type="1">
+<li><strong>Short sequences</strong> receive disproportionately large importance weights when they deviate from the old policy, potentially leading to over-optimization on brief responses</li>
+<li><strong>Long sequences</strong> have their importance ratios dampened even when they represent significant policy changes, potentially under-weighting important long-form improvements</li>
+<li><strong>Length-dependent convergence</strong>: The effective learning rate becomes implicitly coupled to sequence length, which may not align with the true importance of different responses</li>
+</ol>
+<p>This length bias can manifest in practice as models that either truncate responses prematurely (to exploit the short-sequence advantage) or fail to learn from long chains of reasoning (due to dampened signals). The issue is particularly problematic for tasks requiring variable-length reasoning where the optimal response length is itself a learned quantity.</p>
+</section>
+<section id="dynamic-reward-grpo-the-current-state-of-the-art" class="level2">
+<h2 class="anchored" data-anchor-id="dynamic-reward-grpo-the-current-state-of-the-art">Dynamic Reward GRPO: The Current State-of-the-Art</h2>
+<p>Recent work has shown that <strong>Dynamic Reward GRPO (DR GRPO)</strong> addresses both GRPO’s variance issues and GSPO’s length bias, emerging as the current best-performing method in practice. DR GRPO introduces several key innovations:</p>
+<section id="key-improvements-in-dr-grpo" class="level3">
+<h3 class="anchored" data-anchor-id="key-improvements-in-dr-grpo">Key Improvements in DR GRPO</h3>
+<ol type="1">
+<li><p><strong>Dynamic advantage normalization</strong>: Instead of using fixed rewards, DR GRPO adaptively normalizes advantages based on sequence statistics, reducing the impact of length-dependent variance</p></li>
+<li><p><strong>Token-level variance reduction</strong>: Implements sophisticated variance reduction techniques that maintain token-level granularity while controlling noise accumulation</p></li>
+<li><p><strong>Hybrid importance weighting</strong>: Combines elements of token-level and sequence-level importance sampling, dynamically adjusting based on sequence characteristics</p></li>
+<li><p><strong>Length-agnostic optimization</strong>: Explicitly corrects for length bias through adaptive clipping ranges and normalization schemes</p></li>
+</ol>
+</section>
+<section id="empirical-performance" class="level3">
+<h3 class="anchored" data-anchor-id="empirical-performance">Empirical Performance</h3>
+<p>Current benchmarks suggest DR GRPO achieves: - Stability comparable to GSPO on MoE architectures - Performance exceeding both vanilla GRPO and GSPO on mathematical reasoning tasks - No length bias in learned policies - Better sample efficiency than GSPO in many scenarios</p>
+<p>The success of DR GRPO demonstrates that the token-level vs sequence-level debate may have been asking the wrong question. Rather than choosing between these extremes, the optimal approach appears to be a carefully engineered middle ground that preserves token-level signal while controlling variance through dynamic mechanisms.</p>
+</section>
+</section>
+<section id="why-grpo-works-despite-being-wrong" class="level2">
+<h2 class="anchored" data-anchor-id="why-grpo-works-despite-being-wrong">Why GRPO Works Despite Being Wrong</h2>
+<p>Given the theoretical concerns and empirical evidence of failure in specific contexts, why does GRPO succeed in others? Several mechanisms explain its continued effectiveness.</p>
+<section id="small-divergence-regime" class="level3">
+<h3 class="anchored" data-anchor-id="small-divergence-regime">Small Divergence Regime</h3>
+<p>When clipping keeps <span class="math inline">\(\pi_\theta\)</span> close to <span class="math inline">\(\pi_{\theta_{\text{old}}}\)</span>, the token-level approximation may be adequate. If policies are similar, we can write the token-level importance ratio as approximately <span class="math inline">\(1 + \epsilon_t\)</span> where <span class="math inline">\(\epsilon_t\)</span> is small. The product over all tokens becomes <span class="math inline">\(\prod_t (1 + \epsilon_t) \approx \exp(\sum_t \epsilon_t)\)</span>. If the per-token errors <span class="math inline">\(\epsilon_t\)</span> are roughly independent and average to a reasonable value, accumulated error may not be catastrophic.</p>
+<p>This approximation breaks down in two scenarios. First, long sequences (1000+ tokens) accumulate many small errors into large total error. Second, MoE models violate the small divergence assumption because expert routing changes create large per-token probability shifts even when the overall policy changes moderately. The volatility of individual <span class="math inline">\(w_{i,t}\)</span> values exceeds what clipping can control.</p>
+</section>
+<section id="empirical-risk-minimization" class="level3">
+<h3 class="anchored" data-anchor-id="empirical-risk-minimization">Empirical Risk Minimization</h3>
+<p>The theoretical objective may not be what matters for practical optimization. What matters is whether updates improve measured performance. GRPO’s updates are high variance and theoretically unjustified, yet they may still point in a productive direction on average. Deep learning is replete with methods whose theoretical justification was incorrect but which nonetheless work: the original explanation for batch normalization’s effectiveness was wrong, yet batch normalization remains standard practice.</p>
+<p>The question becomes whether GRPO provides a sufficiently strong learning signal despite its flaws. For dense models on shorter sequences, the answer appears to be yes, conditional on careful hyperparameter tuning. For MoE models on longer sequences, the answer is definitively no.</p>
+</section>
+<section id="engineering-as-theory-compensation" class="level3">
+<h3 class="anchored" data-anchor-id="engineering-as-theory-compensation">Engineering as Theory Compensation</h3>
+<p>DAPO adds four modifications to vanilla GRPO: asymmetric clipping (Clip-Higher), dynamic sampling, token-level policy gradient loss, and overlong reward shaping. These are not mere optimizations but compensations for theoretical deficiencies. Clip-Higher allows rare but important tokens to be explored by decoupling upper and lower clipping bounds. Dynamic sampling filters out samples that produce zero gradients, improving sample efficiency. Token-level loss reweights contributions to prevent length bias. Overlong reward shaping penalizes excessive length in a smooth manner.</p>
+<p>Each modification addresses a specific pathology caused by token-level importance weighting. The fact that extensive engineering can rescue GRPO demonstrates two points. First, the theoretical problems are real and manifest as practical issues. Second, the problems are not insurmountable for dense models with sufficient effort. However, the engineering complexity represents hidden cost that GSPO avoids.</p>
+</section>
+<section id="task-structure-and-forgiveness" class="level3">
+<h3 class="anchored" data-anchor-id="task-structure-and-forgiveness">Task Structure and Forgiveness</h3>
+<p>Some tasks may be more tolerant of algorithmic approximation errors. Dense models with shorter sequences provide fewer opportunities for token-level noise to accumulate. The task structure matters: if critical information is concentrated in a few key tokens rather than distributed evenly, token-level importance reweighting might accidentally emphasize those key tokens despite lacking theoretical justification.</p>
+<p>Conversely, tasks requiring precise long-range reasoning over 1000+ token chains of thought expose GRPO’s flaws maximally. The empirical pattern aligns with this hypothesis: GRPO struggles most on MoE models with long sequences, performs acceptably on dense models with shorter sequences, and falls between these extremes on intermediate scenarios.</p>
+</section>
+<section id="the-deepseek-r1-puzzle" class="level3">
+<h3 class="anchored" data-anchor-id="the-deepseek-r1-puzzle">The DeepSeek-R1 Puzzle</h3>
+<p>GRPO’s success in DeepSeek-R1 deserves careful examination rather than dismissal. DeepSeek-R1 achieved remarkable performance on mathematical reasoning benchmarks using GRPO, raising important questions: What conditions allowed GRPO to succeed there? Was it the dense (non-MoE) architecture? Shorter effective sequence lengths during critical training phases? Exceptional hyperparameter tuning? Or does the task structure of mathematical reasoning provide some robustness to GRPO’s approximation errors?</p>
+<p>The absence of public details about DeepSeek-R1’s training process makes definitive conclusions difficult. However, the empirical success suggests that for certain combinations of architecture, task, and sequence length, GRPO’s approximations remain within acceptable bounds. This doesn’t invalidate concerns about GRPO’s theoretical foundations, but it does highlight that the practical impact depends heavily on deployment context.</p>
+<p>Why didn’t DeepSeek use GSPO or DR GRPO? Possible explanations include: (1) GRPO was more mature when DeepSeek-R1 was developed, (2) their specific infrastructure was optimized for GRPO, (3) newer methods like DR GRPO may have implementation subtleties not captured in papers, or (4) their dense architecture and tuning made GRPO sufficient. The choice between algorithms involves engineering tradeoffs beyond pure theoretical optimality.</p>
+</section>
+</section>
+<section id="the-stability-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="the-stability-analysis">The Stability Analysis</h2>
+<p>Training stability metrics reveal GSPO’s robustness advantage:</p>
+<div style="max-width: 100%; overflow-x: auto; margin: 20px 0;">
+<p><img src="../../files/images/gspo-vs-grpo-stability.png" alt="Training Stability Comparison" style="max-width: 100%; height: auto; display: block;"></p>
+</div>
+<p>The stability difference is qualitative, not quantitative. GRPO training exhibits high variance reward curves with frequent drops. Some drops recover, but others lead to irreversible collapse where even reverting to earlier checkpoints fails to restore training. GSPO training shows monotonic improvement with smooth reward curves. The absence of catastrophic failures enables longer training runs and more aggressive scaling of compute.</p>
+<p>Key metrics comparison:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 27%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 31%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Metric</th>
+<th>GRPO</th>
+<th>GSPO</th>
+<th>DR GRPO</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Clipping Rate</td>
+<td>0.13%</td>
+<td>15%</td>
+<td>~5-10%</td>
+</tr>
+<tr class="even">
+<td>Expert Routing Volatility</td>
+<td>~10% change per update</td>
+<td>Immune</td>
+<td>Reduced</td>
+</tr>
+<tr class="odd">
+<td>Failure Mode</td>
+<td>Catastrophic collapse</td>
+<td>Length bias</td>
+<td>Rare</td>
+</tr>
+<tr class="even">
+<td>Recovery</td>
+<td>Often irreversible</td>
+<td>N/A</td>
+<td>Good</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="production-deployment" class="level2">
+<h2 class="anchored" data-anchor-id="production-deployment">Production Deployment</h2>
+<p>Qwen3 models trained with GSPO demonstrate the algorithm’s scalability to production systems. The flagship Qwen3-235B-A22B achieves 85.7 on AIME’24 and 81.5 on AIME’25, substantially exceeding models trained with GRPO variants. On LiveCodeBench v5, it scores 70.7. On CodeForces, it achieves 2056 Elo rating. These results come from extended training runs that would be infeasible with GRPO’s instability.</p>
+<p>Infrastructure requirements differ significantly. GRPO requires Routing Replay for MoE models, adding memory overhead and communication cost. Routing Replay caches the expert routes from the old policy and replays them when computing importance ratios under the new policy. This ensures consistent expert activation but restricts the model’s capacity and complicates the training pipeline. GSPO eliminates this requirement entirely, simplifying infrastructure and allowing full utilization of model capacity.</p>
+<p>Precision tolerance also favors GSPO. Training engines and inference engines often have subtle numerical differences due to optimization choices. GRPO needs exact token-level likelihoods, requiring recomputation in the training engine even when likelihoods were already computed during inference. GSPO’s sequence-level optimization is robust to small numerical differences, potentially allowing direct use of inference engine likelihoods without recomputation. This matters for efficiency in partial rollout and multi-turn RL scenarios.</p>
+<p>DR GRPO appears to offer similar infrastructure simplifications while maintaining better performance characteristics, though widespread production deployments are still emerging.</p>
+</section>
+<section id="when-each-method-wins" class="level2">
+<h2 class="anchored" data-anchor-id="when-each-method-wins">When Each Method Wins</h2>
+<p>The empirical evidence suggests updated guidelines:</p>
+<p><strong>DR GRPO</strong> is the recommended default for new implementations given its strong empirical performance, lack of length bias, and reasonable stability. It represents the current state-of-the-art for most scenarios.</p>
+<p><strong>GSPO</strong> remains a strong choice when maximum training stability is critical, particularly for MoE models where GRPO’s failure is catastrophic. GSPO is also preferable when implementation simplicity matters more than peak performance, or when length bias is manageable for the specific task.</p>
+<p><strong>GRPO</strong> can still be viable for dense models with shorter sequences where its flaws are less exposed, or in legacy systems where migration cost exceeds the performance benefit. However, new implementations should strongly prefer DR GRPO or GSPO unless there are compelling infrastructure constraints.</p>
+</section>
+<section id="the-theoretical-lesson" class="level2">
+<h2 class="anchored" data-anchor-id="the-theoretical-lesson">The Theoretical Lesson</h2>
+<p>This case study illuminates the relationship between theory and practice in deep learning optimization. Theoretical correctness provides robustness guarantees but does not preclude success of theoretically flawed methods in restricted domains. GRPO violates importance sampling principles yet achieves competitive results on specific tasks with sufficient engineering. The violation matters in extreme regimes (MoE, long sequences) where theoretical predictions become empirically manifest.</p>
+<p>The emergence of DR GRPO suggests that the most successful approaches may synthesize insights from both extremes rather than adhering dogmatically to either token-level or sequence-level formulations. The pattern resembles other instances where theory and practice iterate: initial methods have theoretical issues, theoretically-motivated alternatives address some issues but introduce new limitations, and eventually sophisticated engineering produces methods that work well in practice while being more theoretically grounded.</p>
+</section>
+<section id="practical-recommendations" class="level2">
+<h2 class="anchored" data-anchor-id="practical-recommendations">Practical Recommendations</h2>
+<p>For new implementations, <strong>DR GRPO is the recommended starting point</strong> given current empirical evidence. If DR GRPO is not available or well-supported in your framework, GSPO is the next best choice. The implementation for GSPO is straightforward:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> trl <span class="im">import</span> GRPOConfig</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> GRPOConfig(</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    importance_sampling_level<span class="op">=</span><span class="st">"sequence"</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    loss_type<span class="op">=</span><span class="st">"grpo"</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    beta<span class="op">=</span><span class="fl">0.0</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    epsilon<span class="op">=</span><span class="fl">3e-4</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    epsilon_high<span class="op">=</span><span class="fl">4e-4</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    gradient_accumulation_steps<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    steps_per_generation<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The key parameter is <code>importance_sampling_level="sequence"</code> which enables GSPO’s sequence-level importance weighting. The clipping ranges (<code>epsilon=3e-4</code>, <code>epsilon_high=4e-4</code>) are two orders of magnitude smaller than typical GRPO ranges because sequence-level ratios have different numerical scales than token-level ratios. Setting <code>beta=0.0</code> removes KL regularization, which GSPO authors found unnecessary for long chain-of-thought reasoning.</p>
+<p>For existing GRPO implementations, migration should be prioritized based on: - <strong>Critical</strong>: MoE architectures (GRPO fails catastrophically) - <strong>High priority</strong>: Long sequences (&gt;500 tokens), tasks where length bias matters - <strong>Medium priority</strong>: Production systems requiring high stability - <strong>Lower priority</strong>: Dense models with short sequences showing acceptable performance</p>
+<p>For MoE models specifically, GSPO or DR GRPO are non-negotiable. The empirical evidence shows that vanilla GRPO fails catastrophically on MoE, and even heavily engineered GRPO variants require complex infrastructure like Routing Replay.</p>
+</section>
+<section id="limitations-and-caveats" class="level2">
+<h2 class="anchored" data-anchor-id="limitations-and-caveats">Limitations and Caveats</h2>
+<p>This analysis has several limitations worth noting:</p>
+<p><strong>Potential GSPO Tradeoffs</strong>: The length bias issue in GSPO is a real concern that may impact certain applications. Tasks requiring variable-length reasoning or where optimal response length must be learned may suffer from GSPO’s geometric mean normalization.</p>
+<p><strong>DR GRPO Maturity</strong>: While DR GRPO shows promise, it’s a newer method with less production validation than GRPO or GSPO. Implementation details may vary, and hyperparameter sensitivity is not yet fully characterized.</p>
+<p><strong>Experimental Reproducibility</strong>: The empirical comparisons rely on results from published papers without independent replication. Training stability claims would benefit from open-source implementations and shared training curves.</p>
+<p><strong>Evolving Landscape</strong>: All three methods continue to evolve. Enhanced variants and potential refinements may shift the practical tradeoffs. The “optimal” choice may depend on rapidly changing infrastructure and tooling ecosystems.</p>
+<p><strong>Publication Bias</strong>: Papers naturally emphasize scenarios where their proposed method excels. The broader landscape of deployments (many in proprietary settings) may include success cases not reflected in academic publications.</p>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<p>The landscape of policy gradient methods for LLM alignment has evolved significantly:</p>
+<ul>
+<li><strong>GRPO</strong> offered simplicity but suffers from theoretical issues that manifest as catastrophic failures in MoE architectures and high variance in long sequences</li>
+<li><strong>GSPO</strong> corrected GRPO’s variance problems with sound theoretical foundations but introduced length bias</li>
+<li><strong>DR GRPO</strong> appears to address both sets of issues, representing the current state-of-the-art</li>
+</ul>
+<p>For practitioners, the choice hierarchy is clear: 1. <strong>First choice</strong>: DR GRPO if available and well-supported 2. <strong>Strong alternative</strong>: GSPO for stability-critical applications or when DR GRPO is unavailable 3. <strong>Legacy only</strong>: GRPO for existing systems where migration cost outweighs benefits</p>
+<p>The broader lesson is that theory and practice exist in productive tension. Theory predicts failure modes that may not be immediately visible. Practice reveals which theoretical concerns matter most and which can be addressed through engineering. DR GRPO exemplifies an algorithm where theory and practice iterate to produce methods that are both theoretically motivated and empirically superior.</p>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/2507.18071">GSPO Paper</a> - Group Sequence Policy Optimization</li>
+<li><a href="https://arxiv.org/abs/2402.03300">GRPO Paper</a> - DeepSeekMath (introduced GRPO)</li>
+<li><a href="https://arxiv.org/abs/2503.14476">DAPO Paper</a> - Improvements to GRPO</li>
+<li><a href="https://arxiv.org/abs/2504.14286">SRPO Paper</a> - Two-stage GRPO variant</li>
+<li><a href="https://arxiv.org/abs/2510.23027">RSPO Paper</a> - Router-shift aware optimization</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("^(?:http:|https:)\/\/drganghe\.github\.io\/custom");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<a href="https://rish-av.github.io">Rishav</a> ©
+<script>document.write(new Date().getFullYear())</script>
+</div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

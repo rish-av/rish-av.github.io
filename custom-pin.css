@@ -1,0 +1,20 @@
+/* Pinned post indicator - pin icon in top right */
+#listing-recent-posts .list > div:nth-child(1) .card,
+#listing-recent-posts .list > div:nth-child(2) .card,
+#listing-listing .list > div:nth-child(1) .card,
+#listing-listing .list > div:nth-child(2) .card {
+  position: relative;
+}
+
+/* Add pin icon for pinned posts */
+#listing-recent-posts .list > div:nth-child(1) .card::before,
+#listing-recent-posts .list > div:nth-child(2) .card::before,
+#listing-listing .list > div:nth-child(1) .card::before,
+#listing-listing .list > div:nth-child(2) .card::before {
+  content: "📌";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 1.5rem;
+  z-index: 100;
+}

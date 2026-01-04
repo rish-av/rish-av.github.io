@@ -1,0 +1,17 @@
+---
+title: "Publications"
+bibliography: references.bib
+nocite: |
+  @*
+---
+
+```{=html}
+<style>
+div.csl-entry {
+  margin-bottom: 1.5em;
+}
+</style>
+```
+
+::: {#refs}
+:::
