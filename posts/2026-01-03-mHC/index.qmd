@@ -282,6 +282,7 @@ For a 100-layer model with n=4:
 
 **Memory breakdown with $L_r = 10$:**
 ```
+
 Resident memory (first layer of each block):
   10 blocks × 1M tokens × 4 × 4096 × 2 bytes = 328 GB
 

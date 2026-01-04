@@ -1,23 +1,5 @@
 [
   {
-    "listing": "/index.html",
-    "items": [
-      "/posts/2026-01-03-mHC/index.html",
-      "/posts/2025-11-23-GSPO_GRPO/index.html",
-      "/posts/2025-10-18-jax_distributed/index.html",
-      "/posts/2025-3-20-cudp/index.html",
-      "/posts/2024-12-24-spotspraying/index.html"
-    ]
-  },
-  {
-    "listing": "/notes.html",
-    "items": [
-      "/notes/cuny-baruch-visiting-scholar-paperwork-guide.html",
-      "/notes/new-york-state-climate-policy.html",
-      "/quarto-academic-site-examples.html"
-    ]
-  },
-  {
     "listing": "/projects.html",
     "items": [
       "/projects/sporsprayig/index.html",
@@ -29,8 +11,14 @@
     ]
   },
   {
-    "listing": "/media.html",
-    "items": []
+    "listing": "/index.html",
+    "items": [
+      "/posts/2026-01-03-mHC/index.html",
+      "/posts/2025-11-23-GSPO_GRPO/index.html",
+      "/posts/2025-10-18-jax_distributed/index.html",
+      "/posts/2025-3-20-cudp/index.html",
+      "/posts/2024-12-24-spotspraying/index.html"
+    ]
   },
   {
     "listing": "/posts.html",

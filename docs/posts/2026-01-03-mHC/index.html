@@ -496,12 +496,12 @@ Standard = 1 stream × 4096 dim × 2 bytes = 8,192 bytes per token</code></pre>
 <p>Fusion fixes the speed, but we still have a 3.2 TB storage problem. This is where <strong>Selective Recomputing</strong> saves the day.</p>
 <p>The engineers realized that the mHC mixing operation is computationally cheap (lightweight math) but memory-heavy (massive tensors). Therefore, they made the strategic decision to <strong>delete</strong> the massive output immediately after using it. Instead of paying the “rent” of storing these expanded streams, they pay a tiny “tax” of extra compute to re-calculate them from scratch during the backward pass.</p>
 <p><strong>The optimal block size:</strong></p>
-<p><span class="math display">\[x_{l+1} = x_l + F(x_l, W_l)\]</span></p>
+<p><span class="math display">\[L_r^* = \sqrt{\frac{nL}{n+2}}\]</span></p>
 <p>This formula minimizes total memory by balancing two factors: If blocks are too small, you need to store many checkpoints; if blocks are too large, you need huge transient memory for the active block.</p>
 <p>For a 100-layer model with n=4:</p>
-<pre><code>L_r* = √(4 × 100 / 6) ≈ 8-10 layers per block</code></pre>
 <p><strong>Memory breakdown with <span class="math inline">\(L_r = 10\)</span>:</strong></p>
-<pre><code>Resident memory (first layer of each block):
+<pre><code>
+Resident memory (first layer of each block):
   10 blocks × 1M tokens × 4 × 4096 × 2 bytes = 328 GB
 
 Transient memory (active block during backprop):
@@ -519,38 +519,38 @@ Total peak: 820 GB (down from 3.2 TB, a 4× reduction!)</code></pre>
 <p>This is just the basic variant, I will be writing more about the code in details in coming posts.</p>
 <p>To realize the savings we calculated - avoiding the 3.2 TB memory explosion - we must translate our “Traffic Rules” and “Salt Trick” into actual code. We can replicate the exact logic using <strong>JAX</strong>, where <strong>JIT (Just-In-Time)</strong> handles Kernel Fusion and <strong>Checkpointing</strong> handles Recomputing.</p>
 <p><strong>Note:</strong> The code below shows only the Sinkhorn-Knopp projection and core mixing operation. A complete mHC implementation requires integrating the pre-aggregation (<span class="math inline">\(H^{pre}_l\)</span>) and post-distribution (<span class="math inline">\(H^{post}_l\)</span>) matrices along with the residual function <span class="math inline">\(F(x, W)\)</span>. See the paper for full architectural details.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. THE ENFORCER: Sinkhorn-Knopp Projection</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="at">@jax.jit</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sinkhorn_knopp(log_matrix, iterations<span class="op">=</span><span class="dv">20</span>, eps<span class="op">=</span><span class="fl">1e-8</span>):</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Line below implements: M^(0) = exp(H̃^res_l)</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># From Equation 8 (page 9): H^res_l = Sinkhorn-Knopp(H̃^res_l)</span></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Initial step before Equation 9</span></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> jnp.exp(log_matrix)  <span class="co"># ← Initial M^(0)</span></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> body_fun(i, mat):</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Both lines below implement Equation 9 (page 9):</span></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>        <span class="co"># M^(t) = T_r(T_c(M^(t-1)))</span></span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>        mat <span class="op">=</span> mat <span class="op">/</span> (jnp.<span class="bu">sum</span>(mat, axis<span class="op">=</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>) <span class="op">+</span> eps)  <span class="co"># ← T_r (row normalization)</span></span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>        mat <span class="op">=</span> mat <span class="op">/</span> (jnp.<span class="bu">sum</span>(mat, axis<span class="op">=</span><span class="dv">0</span>, keepdims<span class="op">=</span><span class="va">True</span>) <span class="op">+</span> eps)  <span class="co"># ← T_c (column normalization)</span></span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> mat</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> jax.lax.fori_loop(<span class="dv">0</span>, iterations, body_fun, M)  <span class="co"># ← Iterates Equation 9 for t_max iterations</span></span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> M</span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. THE LAYER: Putting it together</span></span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a><span class="at">@jax.checkpoint</span> </span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mhc_layer(x, w_res_log):</span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Line below: Third line of Equation 8 (page 9)</span></span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># H^res_l = Sinkhorn-Knopp(H̃^res_l)</span></span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>    H_res <span class="op">=</span> sinkhorn_knopp(w_res_log)  <span class="co"># ← Equation 8 (third line)</span></span>
-<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Line below: First term of Equation 3 (page 3)</span></span>
-<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>    <span class="co"># x_{l+1} = H^res_l x_l + (H^post_l)^T F(H^pre_l x_l, W_l)</span></span>
-<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>    <span class="co">#           ^^^^^^^^^^^^ (this part only)</span></span>
-<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>    x_new <span class="op">=</span> jnp.matmul(H_res, x)  <span class="co"># ← First term of Equation 3</span></span>
-<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x_new</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. THE ENFORCER: Sinkhorn-Knopp Projection</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">@jax.jit</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sinkhorn_knopp(log_matrix, iterations<span class="op">=</span><span class="dv">20</span>, eps<span class="op">=</span><span class="fl">1e-8</span>):</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Line below implements: M^(0) = exp(H̃^res_l)</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># From Equation 8 (page 9): H^res_l = Sinkhorn-Knopp(H̃^res_l)</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Initial step before Equation 9</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> jnp.exp(log_matrix)  <span class="co"># ← Initial M^(0)</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> body_fun(i, mat):</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Both lines below implement Equation 9 (page 9):</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>        <span class="co"># M^(t) = T_r(T_c(M^(t-1)))</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>        mat <span class="op">=</span> mat <span class="op">/</span> (jnp.<span class="bu">sum</span>(mat, axis<span class="op">=</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>) <span class="op">+</span> eps)  <span class="co"># ← T_r (row normalization)</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>        mat <span class="op">=</span> mat <span class="op">/</span> (jnp.<span class="bu">sum</span>(mat, axis<span class="op">=</span><span class="dv">0</span>, keepdims<span class="op">=</span><span class="va">True</span>) <span class="op">+</span> eps)  <span class="co"># ← T_c (column normalization)</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> mat</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> jax.lax.fori_loop(<span class="dv">0</span>, iterations, body_fun, M)  <span class="co"># ← Iterates Equation 9 for t_max iterations</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> M</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. THE LAYER: Putting it together</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="at">@jax.checkpoint</span> </span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mhc_layer(x, w_res_log):</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Line below: Third line of Equation 8 (page 9)</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># H^res_l = Sinkhorn-Knopp(H̃^res_l)</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>    H_res <span class="op">=</span> sinkhorn_knopp(w_res_log)  <span class="co"># ← Equation 8 (third line)</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Line below: First term of Equation 3 (page 3)</span></span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>    <span class="co"># x_{l+1} = H^res_l x_l + (H^post_l)^T F(H^pre_l x_l, W_l)</span></span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>    <span class="co">#           ^^^^^^^^^^^^ (this part only)</span></span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>    x_new <span class="op">=</span> jnp.matmul(H_res, x)  <span class="co"># ← First term of Equation 3</span></span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x_new</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Key Implementation Details:</strong></p>
 <p><strong><code>@jax.jit</code> - Kernel Fusion:</strong> Tells JAX to compile the function into optimized GPU kernels. The <code>fori_loop</code> iterations are unrolled and fused into a single kernel where all 20 Sinkhorn iterations stay in GPU registers.</p>
 <p><strong><code>@jax.checkpoint</code> - Selective Recomputing:</strong> Discards function outputs after forward pass and automatically recomputes them during backward pass. Saves <span class="math inline">\(4 \times\)</span> memory at ~0.4% compute cost.</p>
