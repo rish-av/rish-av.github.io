@@ -274,7 +274,7 @@ The engineers realized that the mHC mixing operation is computationally cheap (l
 
 **The optimal block size:**
 
-$$x_{l+1} = x_l + F(x_l, W_l)$$
+$$L_r^* = \sqrt{\frac{nL}{n+2}}$$
 
 This formula minimizes total memory by balancing two factors: If blocks are too small, you need to store many checkpoints; if blocks are too large, you need huge transient memory for the active block.
 
