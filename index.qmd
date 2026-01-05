@@ -32,7 +32,7 @@ about:
       target: _blank
     - icon: book
       text: Google Scholar
-      href: https://scholar.google.com/citations?user=YOUR_ID
+      href: https://scholar.google.com/citations?user=DlT4loUAAAAJ
       target: _blank
 
 listing:
