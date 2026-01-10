@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="A fully offline, reward-free framework for behavior discovery and segmentation in reinforcement learning, enabling attribution of actions to meaningful behavior segments.">
+  <meta property="og:title" content="Behaviour Discovery and Attribution for Explainable Reinforcement Learning"/>
+  <meta property="og:description" content="A fully offline, reward-free framework for behavior discovery and segmentation in RL. Published in TMLR 2025."/>
+  <meta property="og:url" content="https://rish-av.github.io/bexrl"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+
+  <meta name="twitter:title" content="Behaviour Discovery and Attribution for Explainable Reinforcement Learning">
+  <meta name="twitter:description" content="A fully offline, reward-free framework for behavior discovery and segmentation in RL. Published in TMLR 2025.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="keywords" content="Reinforcement Learning, Explainability, XRL, Behaviour Discovery, Attribution, Offline RL, Interpretable ML, TMLR">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Behaviour Discovery and Attribution for Explainable Reinforcement Learning</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+
+  <!-- Bulma CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Academicons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+
+  <style>
+    .publication-title {
+      font-family: 'Google Sans', sans-serif;
+    }
+    .publication-authors {
+      font-family: 'Google Sans', sans-serif;
+    }
+    .publication-authors a {
+      color: hsl(204, 86%, 53%);
+    }
+    .publication-authors a:hover {
+      text-decoration: underline;
+    }
+    .publication-authors sup {
+      color: #707070;
+      font-size: 0.7em;
+    }
+    .author-block {
+      display: inline-block;
+    }
+    .publication-links {
+      margin-top: 1rem;
+    }
+    .link-block a {
+      margin: 0 0.25rem;
+    }
+    .hero-body {
+      padding-top: 3rem;
+      padding-bottom: 3rem;
+    }
+    section.section {
+      padding: 3rem 1.5rem;
+    }
+    .content pre {
+      background-color: #f5f5f5;
+      padding: 1.25rem;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    .content pre code {
+      background-color: transparent;
+      padding: 0;
+      font-size: 0.875rem;
+    }
+    footer.footer {
+      padding: 2rem 1.5rem;
+      background-color: #f5f5f5;
+    }
+    .external-link {
+      margin-bottom: 0.5rem;
+    }
+    .button.is-rounded {
+      padding-left: 1.25em;
+      padding-right: 1.25em;
+    }
+    .button .icon:first-child:not(:last-child) {
+      margin-left: calc(-0.5em - 1px);
+      margin-right: 0.25em;
+    }
+  </style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">Behaviour Discovery and Attribution for Explainable Reinforcement Learning</h1>
+          <h3 class="title is-4" style="color: #b5121b;">Transactions of Machine Learning Research (TMLR) 2025</h3>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://rish-av.github.io" target="_blank">Rishav Rishav</a><sup>1,2</sup>,</span>
+            <span class="author-block">
+              <a href="#" target="_blank">Somjit Nath</a><sup>1,3</sup>,</span>
+            <span class="author-block">
+              <a href="#" target="_blank">Vincent Michalski</a><sup>1,4</sup>,</span>
+            <span class="author-block">
+              <a href="#" target="_blank">Samira E. Kahou</a><sup>1,2,5</sup>
+            </span>
+          </div>
+
+          <div class="is-size-5 publication-authors" style="margin-top: 0.5rem;">
+            <span class="author-block"><sup>1</sup>Mila - Quebec AI Institute&nbsp;&nbsp;<sup>2</sup>University of Calgary&nbsp;&nbsp;<sup>3</sup>McGill University&nbsp;&nbsp;<sup>4</sup>University of Montreal&nbsp;&nbsp;<sup>5</sup>CIFAR AI Chair</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- Arxiv PDF link -->
+              <span class="link-block">
+                <a href="https://arxiv.org/pdf/2503.14973" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                    <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+
+              <!-- ArXiv abstract Link -->
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2503.14973" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                    <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+
+              <!-- Github link -->
+              <span class="link-block">
+                <a href="https://github.com/rish-av/xrl" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                    <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                </a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Paper abstract -->
+<section class="section hero is-light">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Building trust in reinforcement learning (RL) agents requires understanding why they make certain decisions, especially in high-stakes applications like robotics, healthcare, and finance. Existing explainability methods often focus on single states or entire trajectories, either providing only local, step-wise insights or attributing decisions to coarse, episode-level summaries. Both approaches miss the recurring strategies and temporally extended patterns that actually drive agent behavior across multiple decisions. We address this gap by proposing a fully offline, reward-free framework for behavior discovery and segmentation, enabling the attribution of actions to meaningful and interpretable behavior segments that capture recurring patterns appearing across multiple trajectories. Our method identifies coherent behavior clusters from state-action sequences and attributes individual actions to these clusters for fine-grained, behavior-centric explanations. Evaluations on four diverse offline RL environments show that our approach discovers meaningful behaviors and outperforms trajectory-level baselines in fidelity, human preference, and cluster coherence.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- End paper abstract -->
+
+<!-- BibTex citation -->
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@article{rishav2025behaviour,
+  title={Behaviour Discovery and Attribution for Explainable Reinforcement Learning},
+  author={Rishav, Rishav and Nath, Somjit and Michalski, Vincent and Kahou, Samira E.},
+  journal={Transactions on Machine Learning Research},
+  year={2025}
+}</code></pre>
+  </div>
+</section>
+<!-- End BibTex citation -->
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content has-text-centered">
+          <p>
+            This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a> which was adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
+            <br>This website is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
